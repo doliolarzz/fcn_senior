@@ -13,8 +13,8 @@ global_config = {
     'LAT_MAX': 47.9958,
     'LON_MIN': 118.006,
     'LON_MAX': 149.994,
-    'MISSINGS': np.load('../weight_npz/missings.npz')['m'],
-    'MERGE_WEIGHT': np.load('../weight_finder/learnt_weight_ones.npz')['w'] + 1e-3,
+#     'MISSINGS': np.load('../weight_npz/missings.npz')['m'],
+#     'MERGE_WEIGHT': np.load('../weight_finder/learnt_weight_ones.npz')['w'] + 1e-3,
     'LEVEL_BUCKET': np.array([0.2, 10, 30]),
     'LEVEL_SIDE': 'right',
 }

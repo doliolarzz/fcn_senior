@@ -2,7 +2,7 @@ import os.path as osp
 
 import torch.nn as nn
 
-from fcn32s import get_upsampling_weight
+from models.fcn32s import get_upsampling_weight
 
 
 class FCN16s(nn.Module):

@@ -13,12 +13,13 @@ import torchvision
 from torch.autograd import Variable
 import torch.nn.functional as F
 from tqdm import tqdm
-from losses import cross_entropy2d
+from utils.losses import cross_entropy2d
 from sklearn.metrics import accuracy_score, f1_score
-from utils.evaluators import fp_fn_image_csi_muti_reg
+from utils.evaluators import fp_fn_image_csi_muti
 from utils.units import dbz_mm
 from utils.visualizers import rainfall_shade
 from tensorboardX import SummaryWriter
+from datetime import datetime
 
 class Trainer(object):
 
@@ -30,14 +31,14 @@ class Trainer(object):
         data_loader,
         save_dir,
         max_iterations=2,
-        interval_validate=100,
+        interval_validate=50,
         interval_checkpoint=1000
     ):
         self.config              = config
         self.model               = model
-        self.optimizer           = optimizer
+        self.optim               = optimizer
         self.data_loader         = data_loader
-        self.save_dir            = save_dir
+        self.save_dir            = save_dir + datetime.now().strftime("_%m%d%H%M")
         self.max_iterations      = max_iterations
         self.interval_validate   = interval_validate
         self.interval_checkpoint = interval_checkpoint
@@ -59,7 +60,7 @@ class Trainer(object):
         self.train_metrics_value = np.zeros(len(self.metrics_name))
         self.val_metrics_value = np.zeros(len(self.metrics_name))
 
-        self.writer = SummaryWriter(os.path.join(save_dir, 'train_logs'))
+        self.writer = SummaryWriter(os.path.join(self.save_dir, 'train_logs'))
 
     def validate(self):
 
@@ -70,17 +71,18 @@ class Trainer(object):
         self.val_metrics_value[:] = 0
         for ib_val, b_val in enumerate(np.random.choice(n_val_batch, n_val)):
 
-            self.pbar_b.set_description("Validating at batch %d / %d" % (ib_val, n_val))
+            self.pbar_i.set_description("Validating at batch %d / %d" % (ib_val, n_val))
             val_data, val_label_reg, _ = self.data_loader.get_val(b_val)
             with torch.no_grad():
                 output = self.model(val_data)
             output = output[:, 0]
+            val_label_reg = val_label_reg[:, 0]
             loss = self.mse_loss(output, val_label_reg) + self.mae_loss(output, val_label_reg)
             self.val_loss += loss.data.item() / len(val_data)
 
             lbl_pred = output.detach().cpu().numpy()
             lbl_true = val_label_reg.cpu().numpy()
-            self.val_metrics_value += fp_fn_image_csi_muti_reg(dbz_mm(lbl_pred), dbz_mm(lbl_true))
+            self.val_metrics_value += fp_fn_image_csi_muti(dbz_mm(lbl_pred), dbz_mm(lbl_true))
 
         self.train_loss /= self.interval_validate
         self.train_metrics_value /= self.interval_validate
@@ -92,7 +94,7 @@ class Trainer(object):
         }, self.epoch)
         for i in range(len(self.metrics_name)):
             self.writer.add_scalars(self.metrics_name[i], {
-                'train': self.metrics_value[i],
+                'train': self.train_metrics_value[i],
                 'valid': self.val_metrics_value[i]
             }, self.epoch)
         self.writer.add_image('result/pred',
@@ -131,18 +133,20 @@ class Trainer(object):
             self.optim.zero_grad()
             output = self.model(train_data)
             output = output[:, 0]
-            loss = self.mse_loss(output, val_label_cat) + self.mae_loss(output, val_label_cat)
+            train_label_reg = train_label_reg[:, 0]
+            loss = self.mse_loss(output, train_label_reg) + self.mae_loss(output, train_label_reg)
             loss.backward()
             self.optim.step()
             self.train_loss += loss.data.item() / len(train_data)
 
             lbl_pred = output.detach().cpu().numpy()
             lbl_true = train_label_reg.cpu().numpy()
-            self.train_metrics_value += fp_fn_image_csi_muti_reg(dbz_mm(lbl_pred), dbz_mm(lbl_true))
+            self.train_metrics_value += fp_fn_image_csi_muti(dbz_mm(lbl_pred), dbz_mm(lbl_true))
             self.add_epoch()
 
     def train(self):
-        for i in tqdm(self.max_iterations):
+        for i in tqdm(range(self.max_iterations)):
             self.train_iteration()
         self.pbar_i.close()
+        self.writer.close()
         

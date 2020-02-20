@@ -63,6 +63,7 @@ def main():
         'IN_LEN': int(args['in']),
         'OUT_LEN': int(args['out']),
         'BATCH_SIZE': int(args['batchsize']),
+        'SCALE': 0.25,
     }
     torch.cuda.manual_seed(1337)
 
@@ -85,7 +86,7 @@ def main():
         ],
         lr=args['lr'],
         momentum=args['momentum'],
-        weight_decay=['weight_decay'])
+        weight_decay=args['weight_decay'])
 
     trainer = Trainer(
         config=config,

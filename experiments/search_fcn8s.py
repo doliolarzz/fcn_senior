@@ -8,7 +8,7 @@ batch_size = 4
 
 for il in in_len:
     for ol in out_len:
-        cmdStr = 'python3 fcn.py --name={} --device={} --in={} --out={} --batchsize={}'.format(
+        cmdStr = 'python3 train_fcn8s.py --name={} --device={} --in={} --out={} --batchsize={}'.format(
             '_'.join([str(il), str(ol)]),
             device,
             il,

@@ -30,7 +30,7 @@ class Trainer(object):
         optimizer,
         data_loader,
         save_dir,
-        max_iterations=2,
+        max_iterations=3,
         interval_validate=50,
         interval_checkpoint=1000
     ):
@@ -43,8 +43,8 @@ class Trainer(object):
         self.interval_validate   = interval_validate
         self.interval_checkpoint = interval_checkpoint
 
-        if not os.path.exists(save_dir):
-            os.makedirs(save_dir)
+        if not os.path.exists(self.save_dir):
+            os.makedirs(self.save_dir)
 
         self.epoch = 1
         self.iteration = 0
@@ -115,11 +115,11 @@ class Trainer(object):
     def add_epoch(self):
 
         self.epoch += 1
+        if self.epoch % self.interval_validate == 0:
+            self.validate()
         if self.epoch % self.interval_checkpoint == 0:
             torch.save(self.model.state_dict(), os.path.join(self.save_dir, 
                 'model_{}_best.pth'.format(self.epoch)))
-        if self.epoch % self.interval_validate == 0:
-            self.validate()
 
     def train_iteration(self):
 

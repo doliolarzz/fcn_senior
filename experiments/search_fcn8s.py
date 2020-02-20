@@ -2,7 +2,7 @@ import os
 from tqdm import tqdm
 
 device = 'cuda:1'
-in_len = [5]
+in_len = [2]
 out_len = [1]
 batch_size = 4
 

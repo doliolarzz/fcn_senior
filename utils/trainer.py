@@ -61,6 +61,9 @@ class Trainer(object):
         self.val_metrics_value = np.zeros(len(self.metrics_name))
 
         self.writer = SummaryWriter(os.path.join(self.save_dir, 'train_logs'))
+        
+    def denorm(self, value):
+        return dbz_mm(value * global_config['NORM_DIV'] + global_config['NORM_MIN'])
 
     def validate(self):
 
@@ -72,7 +75,7 @@ class Trainer(object):
         for ib_val, b_val in enumerate(np.random.choice(n_val_batch, n_val)):
 
             self.pbar_i.set_description("Validating at batch %d / %d" % (ib_val, n_val))
-            val_data, val_label_reg, _ = self.data_loader.get_val(b_val)
+            val_data, val_label_reg = self.data_loader.get_val(b_val)
             with torch.no_grad():
                 output = self.model(val_data)
             output = output[:, 0]
@@ -82,7 +85,7 @@ class Trainer(object):
 
             lbl_pred = output.detach().cpu().numpy()
             lbl_true = val_label_reg.cpu().numpy()
-            self.val_metrics_value += fp_fn_image_csi_muti(dbz_mm(lbl_pred), dbz_mm(lbl_true))
+            self.val_metrics_value += fp_fn_image_csi_muti(self.denorm(lbl_pred), self.denorm(lbl_true))
 
         self.train_loss /= self.interval_validate
         self.train_metrics_value /= self.interval_validate
@@ -129,7 +132,7 @@ class Trainer(object):
         pbar_b = tqdm(range(n_train_batch))
         for b in pbar_b:
             pbar_b.set_description('Training at batch %d / %d' % (b, n_train_batch))
-            train_data, train_label_reg, _ = self.data_loader.get_train(b)
+            train_data, train_label_reg = self.data_loader.get_train(b)
             self.optim.zero_grad()
             output = self.model(train_data)
             output = output[:, 0]
@@ -141,7 +144,7 @@ class Trainer(object):
 
             lbl_pred = output.detach().cpu().numpy()
             lbl_true = train_label_reg.cpu().numpy()
-            self.train_metrics_value += fp_fn_image_csi_muti(dbz_mm(lbl_pred), dbz_mm(lbl_true))
+            self.train_metrics_value += fp_fn_image_csi_muti(self.denorm(lbl_pred), self.denorm(lbl_true))
             self.add_epoch()
 
     def train(self):

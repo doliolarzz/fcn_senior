@@ -73,20 +73,22 @@ def main():
 
     # 2. model
 
-    model = FCN8s(n_class=config['OUT_LEN'], n_channel=config['IN_LEN'])
+    model = FCN8s(n_class=1, n_channel=config['IN_LEN'])
     model = model.to(config['DEVICE'])
 
     # 3. optimizer
 
-    optim = torch.optim.SGD(
-        [
-            {'params': get_parameters(model, bias=False)},
-            {'params': get_parameters(model, bias=True),
-             'lr': args['lr'] * 2, 'weight_decay': 0},
-        ],
-        lr=args['lr'],
-        momentum=args['momentum'],
-        weight_decay=args['weight_decay'])
+#     optim = torch.optim.SGD(
+#         [
+#             {'params': get_parameters(model, bias=False)},
+#             {'params': get_parameters(model, bias=True),
+#              'lr': args['lr'] * 2, 'weight_decay': 0},
+#         ],
+#         lr=args['lr'],
+#         momentum=args['momentum'],
+#         weight_decay=args['weight_decay'])
+    optim = torch.optim.Adam(get_parameters(model, bias=True), lr=args['lr'])
+
 
     trainer = Trainer(
         config=config,

@@ -35,7 +35,7 @@ class DataGenerator():
                 sliced_data[i, j] = \
                     cv2.resize(f, (w, h), interpolation = cv2.INTER_AREA)
                 
-        return mm_dbz(sliced_data)
+        return (mm_dbz(sliced_data) - global_config['NORM_MIN']) / global_config['NORM_DIV']
 
     def get_indices(self, idx):
 
@@ -49,8 +49,8 @@ class DataGenerator():
         data = self.get_data(idx)
         self.last_data.append(torch.from_numpy(data[:, :self.in_len]).to(self.config['DEVICE']))
         self.last_data.append(torch.from_numpy(data[:, self.in_len:]).to(self.config['DEVICE']))
-        cat_data = np.searchsorted(mm_dbz(global_config['LEVEL_BUCKET']), data[:, self.in_len:], side=global_config['LEVEL_SIDE'])
-        self.last_data.append(torch.from_numpy(cat_data).to(self.config['DEVICE']))
+#         cat_data = np.searchsorted(mm_dbz(global_config['LEVEL_BUCKET']), data[:, self.in_len:], side=global_config['LEVEL_SIDE'])
+#         self.last_data.append(torch.from_numpy(cat_data).to(self.config['DEVICE']))
         return tuple(self.last_data)
 
     def get_train(self, i):

@@ -20,6 +20,7 @@ from utils.units import dbz_mm
 from utils.visualizers import rainfall_shade
 from tensorboardX import SummaryWriter
 from datetime import datetime
+from global_config import global_config
 
 class Trainer(object):
 
@@ -32,7 +33,7 @@ class Trainer(object):
         save_dir,
         max_iterations=3,
         interval_validate=50,
-        interval_checkpoint=1000
+        interval_checkpoint=2000
     ):
         self.config              = config
         self.model               = model
@@ -101,10 +102,10 @@ class Trainer(object):
                 'valid': self.val_metrics_value[i]
             }, self.epoch)
         self.writer.add_image('result/pred',
-            rainfall_shade(dbz_mm(lbl_pred[0])).swapaxes(0,2), 
+            rainfall_shade(self.denorm(lbl_pred[0])).swapaxes(0,2), 
             self.epoch)
         self.writer.add_image('result/true',
-            rainfall_shade(dbz_mm(lbl_true[0])).swapaxes(0,2), 
+            rainfall_shade(self.denorm(lbl_true[0])).swapaxes(0,2), 
             self.epoch)
 
         if self.val_loss <= self.best_val_loss:
@@ -122,7 +123,7 @@ class Trainer(object):
             self.validate()
         if self.epoch % self.interval_checkpoint == 0:
             torch.save(self.model.state_dict(), os.path.join(self.save_dir, 
-                'model_{}_best.pth'.format(self.epoch)))
+                'model_{}_last.pth'.format(self.epoch)))
 
     def train_iteration(self):
 

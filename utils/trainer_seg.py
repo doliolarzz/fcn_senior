@@ -4,6 +4,7 @@ import math
 import os
 import os.path as osp
 import shutil
+import cv2
 
 import numpy as np
 import pytz
@@ -15,7 +16,7 @@ import torch.nn.functional as F
 from tqdm import tqdm
 from utils.losses import cross_entropy2d
 from sklearn.metrics import accuracy_score, f1_score
-from utils.evaluators import fp_fn_image_csi_muti
+from utils.evaluators import fp_fn_image_csi_muti_seg
 from utils.units import dbz_mm
 from utils.visualizers import rainfall_shade
 from tensorboardX import SummaryWriter
@@ -31,8 +32,8 @@ class Trainer(object):
         data_loader,
         save_dir,
         max_iterations=3,
-        interval_validate=50,
-        interval_checkpoint=1000
+        interval_validate=100,
+        interval_checkpoint=2000
     ):
         self.config              = config
         self.model               = model
@@ -52,6 +53,8 @@ class Trainer(object):
 
         self.mse_loss = torch.nn.MSELoss().to(config['DEVICE'])
         self.mae_loss = torch.nn.L1Loss().to(config['DEVICE'])
+        self.ce_loss  = cross_entropy2d
+        self.weight   = torch.tensor([1, 20, 50, 100]).float().to(config['DEVICE'])
 
         self.train_loss = 0
         self.val_loss = 0
@@ -72,17 +75,18 @@ class Trainer(object):
         for ib_val, b_val in enumerate(np.random.choice(n_val_batch, n_val)):
 
             self.pbar_i.set_description("Validating at batch %d / %d" % (ib_val, n_val))
-            val_data, val_label_reg, _ = self.data_loader.get_val(b_val)
+            val_data, val_label_reg, val_label_cat = self.data_loader.get_val(b_val)
             with torch.no_grad():
                 output = self.model(val_data)
-            output = output[:, 0]
-            val_label_reg = val_label_reg[:, 0]
-            loss = self.mse_loss(output, val_label_reg) + self.mae_loss(output, val_label_reg)
+#             output = output[:, 0]
+#             val_label_reg = val_label_reg[:, 0]
+#             loss = self.mse_loss(output, val_label_reg) + self.mae_loss(output, val_label_reg)
+            loss = self.ce_loss(output, val_label_cat, weight=self.weight)
             self.val_loss += loss.data.item() / len(val_data)
 
-            lbl_pred = output.detach().cpu().numpy()
-            lbl_true = val_label_reg.cpu().numpy()
-            self.val_metrics_value += fp_fn_image_csi_muti(dbz_mm(lbl_pred), dbz_mm(lbl_true))
+            lbl_pred = output.max(1)[1].detach().cpu().numpy()
+            lbl_true = val_label_cat.cpu().numpy()[:, 0]
+            self.val_metrics_value += fp_fn_image_csi_muti_seg(lbl_pred, lbl_true)
 
         self.train_loss /= self.interval_validate
         self.train_metrics_value /= self.interval_validate
@@ -97,11 +101,13 @@ class Trainer(object):
                 'train': self.train_metrics_value[i],
                 'valid': self.val_metrics_value[i]
             }, self.epoch)
+        img_pred = cv2.cvtColor(np.array(lbl_pred[0] / 4 * 255, dtype=np.uint8), cv2.COLOR_GRAY2RGB)
+        img_true = cv2.cvtColor(np.array(lbl_true[0] / 4 * 255, dtype=np.uint8), cv2.COLOR_GRAY2RGB)
         self.writer.add_image('result/pred',
-            rainfall_shade(dbz_mm(lbl_pred[0])).swapaxes(0,2), 
+            img_pred.swapaxes(0,2), 
             self.epoch)
         self.writer.add_image('result/true',
-            rainfall_shade(dbz_mm(lbl_true[0])).swapaxes(0,2), 
+            img_true.swapaxes(0,2),
             self.epoch)
 
         if self.val_loss <= self.best_val_loss:
@@ -129,24 +135,26 @@ class Trainer(object):
         pbar_b = tqdm(range(n_train_batch))
         for b in pbar_b:
             pbar_b.set_description('Training at batch %d / %d' % (b, n_train_batch))
-            train_data, train_label_reg, _ = self.data_loader.get_train(b)
+            train_data, train_label_reg, train_label_cat = self.data_loader.get_train(b)
             self.optim.zero_grad()
             output = self.model(train_data)
-            output = output[:, 0]
-            train_label_reg = train_label_reg[:, 0]
-            loss = self.mse_loss(output, train_label_reg) + self.mae_loss(output, train_label_reg)
+#             output = output[:, 0]
+#             train_label_reg = train_label_reg[:, 0]
+#             loss = self.mse_loss(output, train_label_reg) + self.mae_loss(output, train_label_reg)
+            loss = self.ce_loss(output, train_label_cat, weight=self.weight)
             loss.backward()
             self.optim.step()
             self.train_loss += loss.data.item() / len(train_data)
 
-            lbl_pred = output.detach().cpu().numpy()
-            lbl_true = train_label_reg.cpu().numpy()
-            self.train_metrics_value += fp_fn_image_csi_muti(dbz_mm(lbl_pred), dbz_mm(lbl_true))
+            lbl_pred = output.max(1)[1].detach().cpu().numpy()
+            lbl_true = train_label_cat.cpu().numpy()
+            self.train_metrics_value += fp_fn_image_csi_muti_seg(lbl_pred, lbl_true)
             self.add_epoch()
 
     def train(self):
         for i in tqdm(range(self.max_iterations)):
             self.train_iteration()
+        torch.save(self.model.state_dict(), os.path.join(self.save_dir, 'model_last.pth'))
         self.pbar_i.close()
         self.writer.close()
         

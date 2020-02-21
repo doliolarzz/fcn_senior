@@ -35,7 +35,7 @@ class DataGenerator():
                 sliced_data[i, j] = \
                     cv2.resize(f, (w, h), interpolation = cv2.INTER_AREA)
                 
-        return mm_dbz(sliced_data)
+        return (mm_dbz(sliced_data) - global_config['NORM_MIN']) / global_config['NORM_DIV']
 
     def get_indices(self, idx):
 

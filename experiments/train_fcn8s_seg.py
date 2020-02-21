@@ -46,7 +46,7 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--name', type=str, default='')
-    parser.add_argument('--lr', type=float, default=1.0e-2)
+    parser.add_argument('--lr', type=float, default=1.0e-4)
     parser.add_argument('--weight-decay', type=float, default=0.0005)
     parser.add_argument('--momentum', type=float, default=0.99, help='momentum')
     parser.add_argument('--device', type=str, default='cuda:0')
@@ -73,20 +73,21 @@ def main():
 
     # 2. model
 
-    model = FCN8s(n_class=config['OUT_LEN'], n_channel=config['IN_LEN'])
+    model = FCN8s(n_class=4, n_channel=config['IN_LEN'])
     model = model.to(config['DEVICE'])
 
     # 3. optimizer
 
-    optim = torch.optim.SGD(
-        [
-            {'params': get_parameters(model, bias=False)},
-            {'params': get_parameters(model, bias=True),
-             'lr': args['lr'] * 2, 'weight_decay': 0},
-        ],
-        lr=args['lr'],
-        momentum=args['momentum'],
-        weight_decay=args['weight_decay'])
+#     optim = torch.optim.SGD(
+#         [
+#             {'params': get_parameters(model, bias=False)},
+#             {'params': get_parameters(model, bias=True),
+#              'lr': args['lr'] * 2, 'weight_decay': 0},
+#         ],
+#         lr=args['lr'],
+#         momentum=args['momentum'],
+#         weight_decay=args['weight_decay'])
+    optim = torch.optim.Adam(get_parameters(model, bias=True), lr=args['lr'])
 
     trainer = Trainer(
         config=config,

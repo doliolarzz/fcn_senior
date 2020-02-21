@@ -103,6 +103,22 @@ def fp_fn_image_csi_muti(pred, gt):
 
     return np.array(all_csi)
 
+def fp_fn_image_csi_muti_seg(pred, gt):
+    # evaluate
+    pred = np.array(pred, dtype=np.int)
+    gt = np.array(gt, dtype=np.int)
+    all_csi = []
+    for i in range(len(global_config['LEVEL_BUCKET']) + 1):
+        
+        fp = np.sum((gt != i) & (pred == i))
+        fn = np.sum((gt == i) & (pred != i))
+        tp = np.sum((gt == i) & (pred == i))
+        tn = np.sum((gt != i) & (pred != i))
+
+        all_csi.append(float(tp + 1e-4) / (fp + fn + tp + 1e-4) * 100)
+
+    return np.array(all_csi)
+
 
 def fp_fn_image_hit(gt, pred, threshold, mask=None):
     # categorize

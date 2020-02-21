@@ -1,5 +1,6 @@
 import torch
 import numpy as np
+from utils.units import mm_dbz
 
 global_config = {
     'DATA_PATH': '/mnt/raid0/wni_dataset/*/*/*.bin',
@@ -13,6 +14,9 @@ global_config = {
     'LAT_MAX': 47.9958,
     'LON_MIN': 118.006,
     'LON_MAX': 149.994,
+    'NORM_MIN': mm_dbz(0),
+    'NORM_MAX': mm_dbz(80),
+    'NORM_DIV': mm_dbz(80) - mm_dbz(0),
 #     'MISSINGS': np.load('../weight_npz/missings.npz')['m'],
 #     'MERGE_WEIGHT': np.load('../weight_finder/learnt_weight_ones.npz')['w'] + 1e-3,
     'LEVEL_BUCKET': np.array([0.2, 10, 30]),

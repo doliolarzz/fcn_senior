@@ -183,6 +183,5 @@ class Trainer(object):
             self.train_iteration()
         self.pbar_i.close()
         self.writer.close()
-        torch.save(self.model.state_dict(), os.path.join(self.save_dir, 
-            'model_last.pth'.format(self.epoch)))
+        torch.save(self.model.state_dict(), os.path.join(self.save_dir, 'model_last.pth'))
         

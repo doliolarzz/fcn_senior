@@ -2,7 +2,7 @@
 import torch
 import torch.nn.functional as F
 
-from unet_parts import DoubleConv, Down, Up, OutConv
+from models.unet.unet_parts import DoubleConv, Down, Up, OutConv
 
 
 class UNet(torch.nn.Module):

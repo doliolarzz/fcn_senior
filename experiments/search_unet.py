@@ -4,7 +4,7 @@ from tqdm import tqdm
 device = 'cuda:1'
 in_len = [2]
 out_len = [1]
-batch_size = 4
+batch_size = 2
 
 for il in in_len:
     for ol in out_len:

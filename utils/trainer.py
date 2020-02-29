@@ -179,8 +179,9 @@ class Trainer(object):
             self.add_epoch()
 
     def train(self):
-        for i in tqdm(range(self.max_iterations)):
+        for i in range(self.max_iterations):
             self.train_iteration()
+            self.pbar_i.update(1)
         self.pbar_i.close()
         self.writer.close()
         torch.save(self.model.state_dict(), os.path.join(self.save_dir, 'model_last.pth'))

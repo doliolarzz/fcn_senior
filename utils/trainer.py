@@ -13,7 +13,7 @@ import torchvision
 from torch.autograd import Variable
 import torch.nn.functional as F
 from tqdm import tqdm
-from utils.losses import cross_entropy2d
+from utils.losses import WeightedCrossEntropyLoss
 from sklearn.metrics import accuracy_score, f1_score
 from utils.evaluators import fp_fn_image_csi_muti, fp_fn_image_csi_muti_seg
 from utils.units import dbz_mm
@@ -53,8 +53,8 @@ class Trainer(object):
 
         self.mse_loss = torch.nn.MSELoss().to(config['DEVICE'])
         self.mae_loss = torch.nn.L1Loss().to(config['DEVICE'])
-        self.cat_loss = cross_entropy2d
-        self.cat_weight = torch.tensor([1, 20, 50, 100]).float().to(config['DEVICE'])
+        self.cat_loss = WeightedCrossEntropyLoss()
+        # self.cat_weight = torch.tensor([1, 20, 50, 100]).float().to(config['DEVICE'])
 
         self.train_loss = 0
         self.val_loss = 0
@@ -83,16 +83,16 @@ class Trainer(object):
                 output = self.model(val_data)
 
             if self.config['TASK'] == 'seg':
-                loss = self.cat_loss(output, val_label, weight=self.cat_weight)
+                loss = self.cat_loss(output, val_label)
                 self.val_loss += loss.data.item() / len(val_data)
                 lbl_pred = output.max(1)[1].detach().cpu().numpy()
                 lbl_true = val_label.cpu().numpy()[:, 0]
                 self.val_metrics_value += fp_fn_image_csi_muti_seg(lbl_pred, lbl_true)
             elif self.config['TASK'] == 'reg':
-                loss = self.mse_loss(output[:, 0], val_label[:, 0]) + self.mae_loss(output[:, 0], val_label[:, 0])
+                loss = self.mse_loss(output, val_label) + self.mae_loss(output, val_label)
                 self.val_loss += loss.data.item() / len(val_data)
-                lbl_pred = output[:, 0].detach().cpu().numpy()
-                lbl_true = val_label[:, 0].cpu().numpy()
+                lbl_pred = output.detach().cpu().numpy()
+                lbl_true = val_label.cpu().numpy()
 #                 print('val', lbl_pred.shape, lbl_true.shape)
                 self.val_metrics_value += fp_fn_image_csi_muti(self.denorm(lbl_pred), self.denorm(lbl_true))
 
@@ -122,11 +122,15 @@ class Trainer(object):
 
         elif self.config['TASK'] == 'reg':
 #             print('img', lbl_pred[0].shape, lbl_true[0].shape)
+            if self.config['DIM'] == '3D':
+                lbl_pred = lbl_pred[:, :, -1]
+                lbl_true = lbl_true[:, :, -1]
+                
             self.writer.add_image('result/pred',
-                rainfall_shade(self.denorm(lbl_pred[0])).swapaxes(0,2), 
+                rainfall_shade(self.denorm(lbl_pred[0, 0])).swapaxes(0,2), 
                 self.epoch)
             self.writer.add_image('result/true',
-                rainfall_shade(self.denorm(lbl_true[0])).swapaxes(0,2), 
+                rainfall_shade(self.denorm(lbl_true[0, 0])).swapaxes(0,2), 
                 self.epoch)
 
         if self.val_loss <= self.best_val_loss:
@@ -159,9 +163,9 @@ class Trainer(object):
             output = self.model(train_data)
 
             if self.config['TASK'] == 'seg':
-                loss = self.cat_loss(output, train_label, weight=self.cat_weight)
+                loss = self.cat_loss(output, train_label)
             elif self.config['TASK'] == 'reg':
-                loss = self.mse_loss(output[:, 0], train_label[:, 0]) + self.mae_loss(output[:, 0], train_label[:, 0])
+                loss = self.mse_loss(output, train_label) + self.mae_loss(output, train_label)
             
             loss.backward()
             self.optim.step()
@@ -172,8 +176,8 @@ class Trainer(object):
                 lbl_true = train_label.cpu().numpy()[:, 0]
                 self.train_metrics_value += fp_fn_image_csi_muti_seg(lbl_pred, lbl_true)
             elif self.config['TASK'] == 'reg':
-                lbl_pred = output[:, 0].detach().cpu().numpy()
-                lbl_true = train_label[:, 0].cpu().numpy()
+                lbl_pred = output.detach().cpu().numpy()
+                lbl_true = train_label.cpu().numpy()
 #                 print('train', lbl_pred.shape, lbl_true.shape)
                 self.train_metrics_value += fp_fn_image_csi_muti(self.denorm(lbl_pred), self.denorm(lbl_true))
             self.add_epoch()

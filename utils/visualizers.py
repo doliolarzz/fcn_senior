@@ -63,7 +63,7 @@ def rainfall_shade(im, mode='RGB'):
 def make_gif(data, fname='test.gif'):
     img_seq = [Image.fromarray(img.astype('uint8'), 'RGB') for img in data]
     img = img_seq[0]
-    img.save(fname, save_all=True, append_images=img_seq[1:], loop=True)
+    img.save(fname, save_all=True, append_images=img_seq[1:], loop=0)
 
 def make_gif_color(data, fname='test.gif'):
     c_imgs = []

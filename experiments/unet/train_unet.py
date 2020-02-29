@@ -2,7 +2,7 @@ import argparse
 import datetime
 import os, sys
 import os.path as osp
-sys.path.insert(0, '../')
+sys.path.insert(0, '../../')
 import torch
 import yaml
 
@@ -35,6 +35,7 @@ def main():
         'OUT_LEN': int(args['out']),
         'BATCH_SIZE': int(args['batchsize']),
         'SCALE': 0.25,
+        'TASK': 'reg',
     }
     torch.cuda.manual_seed(1337)
 
@@ -43,21 +44,15 @@ def main():
     data_loader = DataGenerator(data_path=global_config['DATA_PATH'], config=config)
 
     # 2. model
-
-    model = UNet(n_channels=config['IN_LEN'], n_classes=1)
+    n_classes = 1
+    if 'seg' in config['TASK']:
+        n_classes = 4
+    model = UNet(n_channels=config['IN_LEN'], n_classes=n_classes)
+    model = torch.nn.DataParallel(model, device_ids=[0, 2])
     model = model.to(config['DEVICE'])
 
     # 3. optimizer
 
-#     optim = torch.optim.SGD(
-#         [
-#             {'params': get_parameters(model, bias=False)},
-#             {'params': get_parameters(model, bias=True),
-#              'lr': args['lr'] * 2, 'weight_decay': 0},
-#         ],
-#         lr=args['lr'],
-#         momentum=args['momentum'],
-#         weight_decay=args['weight_decay'])
     optim = torch.optim.Adam(model.parameters(), lr=args['lr'])
 
 

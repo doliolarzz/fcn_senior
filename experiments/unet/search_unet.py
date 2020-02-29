@@ -1,7 +1,7 @@
 import os
 from tqdm import tqdm
 
-device = 'cuda:1'
+device = 'cuda:0'
 in_len = [2]
 out_len = [1]
 batch_size = 2

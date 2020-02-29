@@ -37,7 +37,7 @@ class DataGenerator():
                 
         return (mm_dbz(sliced_data) - global_config['NORM_MIN']) / global_config['NORM_DIV']
 
-    def get_indices(self, idx):
+    def get_data_indices(self, idx):
 
         if self.last_data is not None:
             for i in self.last_data:
@@ -45,21 +45,22 @@ class DataGenerator():
             torch.cuda.empty_cache()
 
         self.last_data = []
-        # idx = self.train_indices[i * self.batch_size : min((i+1) * self.batch_size, self.train_indices.shape[0])]
         data = self.get_data(idx)
         self.last_data.append(torch.from_numpy(data[:, :self.in_len]).to(self.config['DEVICE']))
-        self.last_data.append(torch.from_numpy(data[:, self.in_len:]).to(self.config['DEVICE']))
-#         cat_data = np.searchsorted(mm_dbz(global_config['LEVEL_BUCKET']), data[:, self.in_len:], side=global_config['LEVEL_SIDE'])
-#         self.last_data.append(torch.from_numpy(cat_data).to(self.config['DEVICE']))
+        if self.config['TASK'] == 'seg':
+            cat_data = np.searchsorted(mm_dbz(global_config['LEVEL_BUCKET']), data[:, self.in_len:], side=global_config['LEVEL_SIDE'])
+            self.last_data.append(torch.from_numpy(cat_data).to(self.config['DEVICE']))
+        elif self.config['TASK'] == 'reg':
+            self.last_data.append(torch.from_numpy(data[:, self.in_len:]).to(self.config['DEVICE']))
         return tuple(self.last_data)
 
     def get_train(self, i):
         idx = self.train_indices[i * self.batch_size : min((i+1) * self.batch_size, self.train_indices.shape[0])]
-        return self.get_indices(idx)
+        return self.get_data_indices(idx)
 
     def get_val(self, i):
         idx = self.val_indices[i * self.batch_size : min((i+1) * self.batch_size, self.val_indices.shape[0])]
-        return self.get_indices(idx)
+        return self.get_data_indices(idx)
 
     def shuffle(self):
         self.train_indices = np.arange(self.n_train)

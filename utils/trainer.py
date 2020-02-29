@@ -91,8 +91,9 @@ class Trainer(object):
             elif self.config['TASK'] == 'reg':
                 loss = self.mse_loss(output[:, 0], val_label[:, 0]) + self.mae_loss(output[:, 0], val_label[:, 0])
                 self.val_loss += loss.data.item() / len(val_data)
-                lbl_pred = output.detach().cpu().numpy()
-                lbl_true = val_label.cpu().numpy()
+                lbl_pred = output[:, 0].detach().cpu().numpy()
+                lbl_true = val_label[:, 0].cpu().numpy()
+#                 print('val', lbl_pred.shape, lbl_true.shape)
                 self.val_metrics_value += fp_fn_image_csi_muti(self.denorm(lbl_pred), self.denorm(lbl_true))
 
         self.train_loss /= self.interval_validate
@@ -120,6 +121,7 @@ class Trainer(object):
                 self.epoch)
 
         elif self.config['TASK'] == 'reg':
+#             print('img', lbl_pred[0].shape, lbl_true[0].shape)
             self.writer.add_image('result/pred',
                 rainfall_shade(self.denorm(lbl_pred[0])).swapaxes(0,2), 
                 self.epoch)
@@ -172,6 +174,7 @@ class Trainer(object):
             elif self.config['TASK'] == 'reg':
                 lbl_pred = output[:, 0].detach().cpu().numpy()
                 lbl_true = train_label[:, 0].cpu().numpy()
+#                 print('train', lbl_pred.shape, lbl_true.shape)
                 self.train_metrics_value += fp_fn_image_csi_muti(self.denorm(lbl_pred), self.denorm(lbl_true))
             self.add_epoch()
 

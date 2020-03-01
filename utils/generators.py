@@ -52,6 +52,11 @@ class DataGenerator():
             self.last_data.append(torch.from_numpy(cat_data).to(self.config['DEVICE']))
         elif self.config['TASK'] == 'reg':
             self.last_data.append(torch.from_numpy(data[:, self.in_len:]).to(self.config['DEVICE']))
+
+        if self.config['DIM'] == '3D':
+            for i in range(len(self.last_data)):
+                self.last_data[i] = self.last_data[i][:, None, :]
+                
         return tuple(self.last_data)
 
     def get_train(self, i):

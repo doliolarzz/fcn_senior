@@ -36,6 +36,7 @@ def main():
         'BATCH_SIZE': int(args['batchsize']),
         'SCALE': 0.25,
         'TASK': 'reg',
+        'DIM': '2D',
     }
     torch.cuda.manual_seed(1337)
 

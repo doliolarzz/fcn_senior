@@ -31,13 +31,13 @@ class DataGenerator():
         self.test_indices = np.setdiff1d(self.test_indices, global_config['MISSINGS'])
         self.shuffle()
 
-    def get_data(self, indices, w_size):
+    def get_data(self, indices):
         scale = self.config['SCALE']
         h = int(global_config['DATA_HEIGHT'] * scale)
         w = int(global_config['DATA_WIDTH'] * scale)
-        sliced_data = np.zeros((len(indices), w_size, h, w), dtype=np.float32)
+        sliced_data = np.zeros((len(indices), self.windows_size, h, w), dtype=np.float32)
         for i, idx in enumerate(indices):
-            for j in range(w_size):
+            for j in range(self.windows_size):
                 f = np.fromfile(self.files[idx + j], dtype=np.float32) \
                     .reshape((global_config['DATA_HEIGHT'], global_config['DATA_WIDTH']))
                 sliced_data[i, j] = \
@@ -45,7 +45,7 @@ class DataGenerator():
                 
         return (mm_dbz(sliced_data) - global_config['NORM_MIN']) / global_config['NORM_DIV']
 
-    def get_data_indices(self, idx, w_size, isTest=False):
+    def get_data_indices(self, idx):
 
         if self.last_data is not None:
             for i in self.last_data:
@@ -53,20 +53,14 @@ class DataGenerator():
             torch.cuda.empty_cache()
 
         self.last_data = []
-        data = self.get_data(idx, w_size)
+        data = self.get_data(idx)
         self.last_data.append(torch.from_numpy(data[:, :self.in_len]).to(self.config['DEVICE']))
         
         if self.config['TASK'] == 'seg':
             cat_data = np.searchsorted(mm_dbz(global_config['LEVEL_BUCKET']), data[:, self.in_len:], side=global_config['LEVEL_SIDE'])
-            if isTest:
-                self.last_data.append(torch.from_numpy(cat_data))
-            else:
-                self.last_data.append(torch.from_numpy(cat_data).to(self.config['DEVICE']))
+            self.last_data.append(torch.from_numpy(cat_data).to(self.config['DEVICE']))
         elif self.config['TASK'] == 'reg':
-            if isTest:
-                self.last_data.append(torch.from_numpy(data[:, self.in_len:]))
-            else:
-                self.last_data.append(torch.from_numpy(data[:, self.in_len:]).to(self.config['DEVICE']))
+            self.last_data.append(torch.from_numpy(data[:, self.in_len:]).to(self.config['DEVICE']))
 
         if self.config['DIM'] == '3D':
             for i in range(len(self.last_data)):
@@ -76,15 +70,56 @@ class DataGenerator():
 
     def get_train(self, i):
         idx = self.train_indices[i * self.batch_size : min((i+1) * self.batch_size, self.train_indices.shape[0])]
-        return self.get_data_indices(idx, self.windows_size)
+        return self.get_data_indices(idx)
 
     def get_val(self, i):
         idx = self.val_indices[i * self.batch_size : min((i+1) * self.batch_size, self.val_indices.shape[0])]
-        return self.get_data_indices(idx, self.windows_size)
+        return self.get_data_indices(idx)
+
+    def get_data_test(self, indices):
+
+        scale = self.config['SCALE']
+        h = int(global_config['DATA_HEIGHT'] * scale)
+        w = int(global_config['DATA_WIDTH'] * scale)
+        sliced_input = np.zeros((len(indices), self.config['IN_LEN'], h, w), dtype=np.float32)
+        sliced_label = np.zeros((len(indices), global_config['OUT_TARGET_LEN'], global_config['DATA_HEIGHT'], global_config['DATA_WIDTH']), dtype=np.float32)
+        for i, idx in enumerate(indices):
+            for j in range(self.config['IN_LEN']):
+                f = np.fromfile(self.files[idx + j], dtype=np.float32) \
+                    .reshape((global_config['DATA_HEIGHT'], global_config['DATA_WIDTH']))
+                sliced_input[i, j] = \
+                    cv2.resize(f, (w, h), interpolation = cv2.INTER_AREA)
+                
+        for i, idx in enumerate(indices):
+            for j in range(self.config['IN_LEN'], self.config['IN_LEN'] + global_config['OUT_TARGET_LEN']):
+                sliced_label[i, j] = np.fromfile(self.files[idx + j], dtype=np.float32) \
+                    .reshape((global_config['DATA_HEIGHT'], global_config['DATA_WIDTH']))
+                
+        sliced_input = (mm_dbz(sliced_input) - global_config['NORM_MIN']) / global_config['NORM_DIV']
+
+        if self.last_data is not None:
+            for i in self.last_data:
+                del i
+            torch.cuda.empty_cache()
+
+        self.last_data = []
+        self.last_data.append(torch.from_numpy(sliced_input).to(self.config['DEVICE']))
+        
+        if self.config['TASK'] == 'seg':
+            cat_data = np.searchsorted(global_config['LEVEL_BUCKET'], sliced_label, side=global_config['LEVEL_SIDE'])
+            self.last_data.append(torch.from_numpy(cat_data))
+        elif self.config['TASK'] == 'reg':
+            self.last_data.append(torch.from_numpy(sliced_label))
+
+        if self.config['DIM'] == '3D':
+            for i in range(len(self.last_data)):
+                self.last_data[i] = self.last_data[i][:, None, :]
+                
+        return tuple(self.last_data)
 
     def get_test(self, i):
         idx = self.test_indices[i * self.batch_size : min((i+1) * self.batch_size, self.test_indices.shape[0])]
-        return self.get_data_indices(idx, self.windows_size_test, isTest=True)
+        return self.get_data_test(idx)
 
     def shuffle(self):
         np.random.shuffle(self.train_indices)

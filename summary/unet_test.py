@@ -22,14 +22,15 @@ def test(model, weight_path, data_loader, config, save_dir, crop=None):
         outputs = []
         with torch.no_grad():
             for t in range(int(global_config['OUT_TARGET_LEN']//config['OUT_LEN'])):
-                print(data.shape)
+                print('input data', data.shape)
                 output = model(data)
-                print(output.shape)
+                print('output', output.shape)
                 outputs.append(output.detach().cpu().numpy())
                 data = torch.cat([data[:, 1:], output], dim=1)
         pred = np.array(outputs)
-        print(pred.shape, pred.shape)
+        print('pred label shape', pred.shape, label.shape)
         pred = denorm(pred)
+        pred = cv2.resize(pred, (global_config['DATA_WIDTH'], global_config['DATA_HEIGHT']), interpolation = cv2.INTER_AREA)
         # don't need to denorm test
         csi = fp_fn_image_csi(pred, label)
         csi_multi = fp_fn_image_csi_muti_reg(pred, label)

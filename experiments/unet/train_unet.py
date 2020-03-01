@@ -10,6 +10,7 @@ from models.unet.unet_model import UNet
 from utils.trainer import Trainer
 from utils.generators import DataGenerator
 from global_config import global_config
+from summary.unet_test import test
 
 here = osp.dirname(osp.abspath(__file__))
 
@@ -67,9 +68,8 @@ def main():
     trainer.train()
 
     # 5. test
-
-
-
+    weight_path = save_dir + '/model_last.pth'
+    test(model, weight_path, data_loader, config, save_dir, crop=None)
 
 if __name__ == '__main__':
     main()

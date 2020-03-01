@@ -11,7 +11,7 @@ from utils.evaluators import fp_fn_image_csi, cal_rmse_all, fp_fn_image_csi_muti
 from global_config import global_config
 from models.unet.unet_model import UNet
 
-def test(model, weight_path, data_loader, config, save_path, crop=None):
+def test(model, weight_path, data_loader, config, save_dir, crop=None):
 
     model.load_state_dict(torch.load(weight_path, map_location='cuda'))
 
@@ -36,7 +36,7 @@ def test(model, weight_path, data_loader, config, save_path, crop=None):
         rmse, rmse_rain, rmse_non_rain = cal_rmse_all(pred, label)
         result_all.append([rmse, rmse_rain, rmse_non_rain, csi, csi_multi])
 
-        path = save_path + '/imgs'
+        path = save_dir + '/imgs'
         if not os.path.exists(path):
             os.makedirs(path)
         for i in range(pred.shape[0]):
@@ -51,4 +51,4 @@ def test(model, weight_path, data_loader, config, save_path, crop=None):
 
     result_all = np.array(result_all)
     result_all_mean = np.mean(result_all, axis=0)
-    np.savez(save_path + '/result.npz', r = result_all_mean)
+    np.savez(save_dir + '/result.npz', r = result_all_mean)

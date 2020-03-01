@@ -17,7 +17,7 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--name', type=str, default='')
-    parser.add_argument('--lr', type=float, default=1.0e-2)
+    parser.add_argument('--lr', type=float, default=1.0e-3)
     parser.add_argument('--weight-decay', type=float, default=0.0005)
     parser.add_argument('--momentum', type=float, default=0.99, help='momentum')
     parser.add_argument('--device', type=str, default='cuda:0')
@@ -56,7 +56,7 @@ def main():
 
     optim = torch.optim.Adam(model.parameters(), lr=args['lr'])
 
-
+    #4. train
     trainer = Trainer(
         config=config,
         model=model,
@@ -65,6 +65,10 @@ def main():
         save_dir=save_dir
     )
     trainer.train()
+
+    # 5. test
+
+
 
 
 if __name__ == '__main__':

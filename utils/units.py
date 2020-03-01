@@ -25,3 +25,6 @@ c_f = 10*np.log10(200)
 def mm_dbz(value):
     value = np.clip(value, global_config['MM_MIN'], global_config['MM_MAX'])
     return c_f + 16*np.log10(value + 1)
+
+def denorm(value):
+    return dbz_mm(value * global_config['NORM_DIV'] + global_config['NORM_MIN'])

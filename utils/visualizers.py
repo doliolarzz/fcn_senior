@@ -68,6 +68,6 @@ def make_gif(data, fname='test.gif'):
 def make_gif_color(data, fname='test.gif'):
     c_imgs = []
     for i in range(data.shape[0]):
-        c_img = rainfall_shade(data[i] / data.max() * 255)
+        c_img = rainfall_shade(data[i])
         c_imgs.append(c_img)
     make_gif(c_imgs, fname)

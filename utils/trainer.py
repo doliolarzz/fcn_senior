@@ -16,7 +16,7 @@ from tqdm import tqdm
 from utils.losses import WeightedCrossEntropyLoss
 from sklearn.metrics import accuracy_score, f1_score
 from utils.evaluators import fp_fn_image_csi_muti, fp_fn_image_csi_muti_seg
-from utils.units import dbz_mm
+from utils.units import dbz_mm, denorm
 from utils.visualizers import rainfall_shade
 from tensorboardX import SummaryWriter
 from datetime import datetime
@@ -65,9 +65,6 @@ class Trainer(object):
 
         self.writer = SummaryWriter(os.path.join(self.save_dir, 'train_logs'))
         
-    def denorm(self, value):
-        return dbz_mm(value * global_config['NORM_DIV'] + global_config['NORM_MIN'])
-
     def validate(self):
 
         self.model.eval()
@@ -94,7 +91,7 @@ class Trainer(object):
                 lbl_pred = output.detach().cpu().numpy()
                 lbl_true = val_label.cpu().numpy()
 #                 print('val', lbl_pred.shape, lbl_true.shape)
-                self.val_metrics_value += fp_fn_image_csi_muti(self.denorm(lbl_pred), self.denorm(lbl_true))
+                self.val_metrics_value += fp_fn_image_csi_muti(denorm(lbl_pred), denorm(lbl_true))
 
         self.train_loss /= self.interval_validate
         self.train_metrics_value /= self.interval_validate
@@ -127,10 +124,10 @@ class Trainer(object):
                 lbl_true = lbl_true[:, :, -1]
                 
             self.writer.add_image('result/pred',
-                rainfall_shade(self.denorm(lbl_pred[0, 0])).swapaxes(0,2), 
+                rainfall_shade(denorm(lbl_pred[0, 0])).swapaxes(0,2), 
                 self.epoch)
             self.writer.add_image('result/true',
-                rainfall_shade(self.denorm(lbl_true[0, 0])).swapaxes(0,2), 
+                rainfall_shade(denorm(lbl_true[0, 0])).swapaxes(0,2), 
                 self.epoch)
 
         if self.val_loss <= self.best_val_loss:
@@ -178,7 +175,7 @@ class Trainer(object):
                 lbl_pred = output.detach().cpu().numpy()
                 lbl_true = train_label.cpu().numpy()
 #                 print('train', lbl_pred.shape, lbl_true.shape)
-                self.train_metrics_value += fp_fn_image_csi_muti(self.denorm(lbl_pred), self.denorm(lbl_true))
+                self.train_metrics_value += fp_fn_image_csi_muti(denorm(lbl_pred), denorm(lbl_true))
             self.add_epoch()
 
     def train(self):

@@ -91,7 +91,7 @@ class DataGenerator():
                     cv2.resize(f, (w, h), interpolation = cv2.INTER_AREA)
                 
         for i, idx in enumerate(indices):
-            for j in range(self.config['IN_LEN'], self.config['IN_LEN'] + global_config['OUT_TARGET_LEN']):
+            for j in range(global_config['OUT_TARGET_LEN']):
                 sliced_label[i, j] = np.fromfile(self.files[idx + j], dtype=np.float32) \
                     .reshape((global_config['DATA_HEIGHT'], global_config['DATA_WIDTH']))
                 
@@ -107,9 +107,9 @@ class DataGenerator():
         
         if self.config['TASK'] == 'seg':
             cat_data = np.searchsorted(global_config['LEVEL_BUCKET'], sliced_label, side=global_config['LEVEL_SIDE'])
-            self.last_data.append(torch.from_numpy(cat_data))
+            self.last_data.append(cat_data)
         elif self.config['TASK'] == 'reg':
-            self.last_data.append(torch.from_numpy(sliced_label))
+            self.last_data.append(sliced_label)
 
         if self.config['DIM'] == '3D':
             for i in range(len(self.last_data)):

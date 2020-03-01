@@ -7,7 +7,6 @@ import shutil
 
 import numpy as np
 import pytz
-import skimage.io
 import torch
 import torchvision
 from torch.autograd import Variable

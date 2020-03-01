@@ -148,11 +148,10 @@ class Trainer(object):
 
     def train_iteration(self):
 
-        self.model.train()
-
         n_train_batch = self.data_loader.n_train_batch()
         pbar_b = tqdm(range(n_train_batch))
         for b in pbar_b:
+            self.model.train()
             pbar_b.set_description('Training at batch %d / %d' % (b, n_train_batch))
             train_data, train_label = self.data_loader.get_train(b)
             self.optim.zero_grad()

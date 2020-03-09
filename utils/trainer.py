@@ -30,9 +30,9 @@ class Trainer(object):
         optimizer,
         data_loader,
         save_dir,
-        max_iterations=3,
+        max_iterations=1,
         interval_validate=50,
-        interval_checkpoint=2000
+        interval_checkpoint=1000
     ):
         self.config              = config
         self.model               = model
@@ -118,9 +118,6 @@ class Trainer(object):
 
         elif self.config['TASK'] == 'reg':
 #             print('img', lbl_pred[0].shape, lbl_true[0].shape)
-            if self.config['DIM'] == '3D':
-                lbl_pred = lbl_pred[:, :, -1]
-                lbl_true = lbl_true[:, :, -1]
                 
             self.writer.add_image('result/pred',
                 rainfall_shade(denorm(lbl_pred[0, 0])).swapaxes(0,2), 

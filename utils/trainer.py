@@ -156,7 +156,7 @@ class Trainer(object):
             train_data, train_label = self.data_loader.get_train(b)
             self.optim.zero_grad()
             output = self.model(train_data)
-
+            
             if self.config['TASK'] == 'seg':
                 loss = self.cat_loss(output, train_label)
             elif self.config['TASK'] == 'reg':

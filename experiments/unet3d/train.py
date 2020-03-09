@@ -27,15 +27,15 @@ def main():
     parser.add_argument('--batchsize', type=int, default=4)
     args = vars(parser.parse_args())
 
-    if not os.path.exists('./unet_logs'):
-        os.makedirs('./unet_logs')
-    save_dir = './unet_logs/logs_' + args['name']
+    if not os.path.exists('./model_logs'):
+        os.makedirs('./model_logs')
+    save_dir = './model_logs/logs_' + args['name']
     config = {
         'DEVICE': torch.device(args['device']),
         'IN_LEN': int(args['in']),
         'OUT_LEN': int(args['out']),
         'BATCH_SIZE': int(args['batchsize']),
-        'SCALE': 0.25,
+        'SCALE': 0.2,
         'TASK': 'reg',
         'DIM': '3D',
     }
@@ -49,8 +49,8 @@ def main():
     n_classes = 1
     if 'seg' in config['TASK']:
         n_classes = 4
-    model = UNet3D(in_channels=1, out_channels=n_classes, final_sigmoid=False, is_segmentation=False)
-    model = torch.nn.DataParallel(model, device_ids=[0, 2])
+    model = UNet3D(in_channels=1, out_channels=n_classes, final_sigmoid=False, num_levels=3, is_segmentation=False)
+    model = torch.nn.DataParallel(model, device_ids=[0, 2, 3])
     model = model.to(config['DEVICE'])
 
     # 3. optimizer

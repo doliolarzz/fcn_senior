@@ -102,7 +102,7 @@ class Abstract3DUNet(nn.Module):
         # channels to the number of labels
         # self.final_conv = nn.Conv3d(f_maps[0], out_channels, 1)
         ##### Start Custom Code #####
-        self.final_conv = nn.Conv2d(f_maps[0], out_channels, 1)
+        self.final_conv = nn.Conv2d(256, out_channels, 1)
         ##### End Custom Code #####
 
         if is_segmentation:

@@ -2,9 +2,9 @@ import os
 from tqdm import tqdm
 
 device = 'cuda:0'
-in_len = [3]
+in_len = [4]
 out_len = [1]
-batch_size = 6
+batch_size = 3
 
 for il in in_len:
     for ol in out_len:

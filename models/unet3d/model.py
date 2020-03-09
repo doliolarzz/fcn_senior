@@ -100,7 +100,10 @@ class Abstract3DUNet(nn.Module):
 
         # in the last layer a 1×1 convolution reduces the number of output
         # channels to the number of labels
-        self.final_conv = nn.Conv3d(f_maps[0], out_channels, 1)
+        # self.final_conv = nn.Conv3d(f_maps[0], out_channels, 1)
+        ##### Start Custom Code #####
+        self.final_conv = nn.Conv2d(f_maps[0], out_channels, 1)
+        ##### End Custom Code #####
 
         if is_segmentation:
             # semantic segmentation problem
@@ -130,7 +133,10 @@ class Abstract3DUNet(nn.Module):
             # of the previous decoder
             x = decoder(encoder_features, x)
 
-        x = self.final_conv(x)
+        # x = self.final_conv(x)
+        ##### Start Custom Code #####
+        x = self.final_conv(x.view(x.size()[0], -1, *(x.size()[3:])))
+        ##### End Custom Code #####
 
         # apply final_activation (i.e. Sigmoid or Softmax) only during prediction. During training the network outputs
         # logits and it's up to the user to normalize it before visualising with tensorboard or computing validation metric

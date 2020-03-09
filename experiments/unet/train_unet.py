@@ -50,7 +50,7 @@ def main():
     if 'seg' in config['TASK']:
         n_classes = 4
     model = UNet(n_channels=config['IN_LEN'], n_classes=n_classes)
-    model = torch.nn.DataParallel(model, device_ids=[0, 2])
+    model = torch.nn.DataParallel(model, device_ids=[0, 2, 3])
     model = model.to(config['DEVICE'])
 
     # 3. optimizer

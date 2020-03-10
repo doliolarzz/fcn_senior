@@ -157,3 +157,18 @@ def cal_rmse_all(pred, label, thres=0.2):
     rmse_non_rain = cal_rmse(pred[~mask], label[~mask])
 
     return rmse, rmse_rain, rmse_non_rain
+
+def torch_cal_rmse(yhat,y):
+    return torch.sqrt(torch.mean((yhat-y)**2))
+
+def torch_cal_rmse_all(pred, label, thres=0.2):
+
+    assert pred.size() == label.size()
+    
+    mask = label>thres
+
+    rmse = cal_rmse(pred, label)
+    rmse_rain = cal_rmse(pred[mask], label[mask])
+    rmse_non_rain = cal_rmse(pred[~mask], label[~mask])
+
+    return rmse, rmse_rain, rmse_non_rain

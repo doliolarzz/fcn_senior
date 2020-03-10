@@ -10,7 +10,7 @@ from models.unet.unet_model import UNet
 from utils.trainer import Trainer
 from utils.generators import DataGenerator
 from global_config import global_config
-from summary.unet_test import test
+from summary.test import test
 
 here = osp.dirname(osp.abspath(__file__))
 

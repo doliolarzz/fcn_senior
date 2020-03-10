@@ -28,3 +28,10 @@ def mm_dbz(value):
 
 def denorm(value):
     return dbz_mm(value * global_config['NORM_DIV'] + global_config['NORM_MIN'])
+
+def torch_dbz_mm(value):
+    value = torch.clamp(value, global_config['NORM_MIN'], global_config['NORM_MAX'])
+    return torch.pow(10, value/16) / c_back - 1
+
+def torch_denorm(value):
+    return torch_dbz_mm(value * global_config['NORM_DIV'] + global_config['NORM_MIN'])

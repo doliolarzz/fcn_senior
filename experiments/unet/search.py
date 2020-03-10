@@ -8,7 +8,7 @@ batch_size = 9
 
 for il in in_len:
     for ol in out_len:
-        cmdStr = 'python3 train_unet.py --name={} --device={} --in={} --out={} --batchsize={}'.format(
+        cmdStr = 'python3 train.py --name={} --device={} --in={} --out={} --batchsize={}'.format(
             '_'.join([str(il), str(ol)]),
             device,
             il,

@@ -51,7 +51,7 @@ def test(model, data_loader, config, save_dir, files, file_name, crop=None):
 
     sliced_input = (mm_dbz(sliced_input) -
                     global_config['NORM_MIN']) / global_config['NORM_DIV']
-    sliced_input = sliced_input.to(config['DEVICE'])
+    sliced_input = torch.from_numpy(sliced_input).to(config['DEVICE'])
 
     if config['DIM'] == '3D':
         sliced_input = sliced_input[:, None, :]
@@ -69,8 +69,7 @@ def test(model, data_loader, config, save_dir, files, file_name, crop=None):
                     [outputs, output.detach().cpu().numpy()], axis=1)
 
             if config['DIM'] == '3D':
-                sliced_input = torch.cat(
-                    [sliced_input[:, :, 1:], output], dim=2)
+                sliced_input = torch.cat([sliced_input[:, :, 1:], output[:, :, None]], dim=2)
             else:
                 sliced_input = torch.cat([sliced_input[:, 1:], output], dim=1)
 
@@ -91,8 +90,8 @@ def test(model, data_loader, config, save_dir, files, file_name, crop=None):
     rmse, rmse_rain, rmse_non_rain = cal_rmse_all(pred_resized, sliced_label)
     result_all = [rmse, rmse_rain, rmse_non_rain, csi] + list(csi_multi)
 
-    h_small = pred_resized.shape[2] * 0.5
-    w_small = pred_resized.shape[3] * 0.5
+    h_small = int(pred_resized.shape[2] * 0.5)
+    w_small = int(pred_resized.shape[3] * 0.5)
 
     pred_small = np.zeros(
         (sliced_label.shape[0], sliced_label.shape[1], h_small, w_small))
@@ -105,9 +104,6 @@ def test(model, data_loader, config, save_dir, files, file_name, crop=None):
             label_small[i, j] = cv2.resize(
                 sliced_label[i, j], (w_small, h_small), interpolation=cv2.INTER_AREA)
 
-    scale = 1
-    fontScale = min(global_config['DATA_HEIGHT'],
-                    global_config['DATA_WIDTH'])/(25/scale)
     path = save_dir + '/imgs'
     if not os.path.exists(path):
         os.makedirs(path)
@@ -115,24 +111,11 @@ def test(model, data_loader, config, save_dir, files, file_name, crop=None):
         # Save pred gif
         #             make_gif(pred[i] / 80 * 255, path + '/pred_{}_{}.gif'.format(b, i))
         # Save colored pred gif
-        name = os.path.basename(files[idx + i])
-        t_pred = cv2.putText(pred_small[i], name,
-                             (0, 0),
-                             cv2.FONT_HERSHEY_SIMPLEX,
-                             fontScale,
-                             (255,255,255),
-                             2)
-        make_gif_color(t_pred, path + '/pred_colored.gif')
+        make_gif_color(pred_small[i], path + '/pred_colored.gif')
         # Save gt gif
 #             make_gif(label_small[i] / 80 * 255, path + '/gt_{}_{}.gif'.format(b, i))
         # Save colored gt gif
-        t_label = cv2.putText(label_small[i], name,
-                             (0, 0),
-                             cv2.FONT_HERSHEY_SIMPLEX,
-                             fontScale,
-                             (255,255,255),
-                             2)
-        make_gif_color(t_label, path + '/gt_colored.gif')
+        make_gif_color(label_small[i], path + '/gt_colored.gif')
 
     result_all = np.array(result_all)
     np.savetxt(save_dir + '/result.txt', result_all, delimiter=',')

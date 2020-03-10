@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 from PIL import Image
+from global_config import global_config
 
 def make_video(image_conv, image_label, h, w):
     out = cv2.VideoWriter('compare_1hr.mp4',cv2.VideoWriter_fourcc(*'MP4V'), 10, (w*2+3*3,h+3*2))
@@ -67,7 +68,7 @@ def make_gif(data, fname='test.gif'):
             img = cv2.cvtColor(img.astype(np.uint8), cv2.COLOR_GRAY2RGB)
         img_seq.append(Image.fromarray(img, 'RGB'))
     img = img_seq[0]
-    img.save(fname, save_all=True, append_images=img_seq[1:], loop=0, duration=1000)
+    img.save(fname, save_all=True, append_images=img_seq[1:], loop=0, duration=500)
 
 def make_gif_color(data, fname='test.gif'):
     c_imgs = []

@@ -67,7 +67,7 @@ def make_gif(data, fname='test.gif'):
             img = cv2.cvtColor(img.astype(np.uint8), cv2.COLOR_GRAY2RGB)
         img_seq.append(Image.fromarray(img, 'RGB'))
     img = img_seq[0]
-    img.save(fname, save_all=True, append_images=img_seq[1:], loop=0, duraton=500)
+    img.save(fname, save_all=True, append_images=img_seq[1:], loop=0, duration=1000)
 
 def make_gif_color(data, fname='test.gif'):
     c_imgs = []

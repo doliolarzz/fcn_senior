@@ -9,6 +9,7 @@
 
 
 import numpy as np
+import torch
 from global_config import global_config
 
 def hex2Rgb(tn_rgb):
@@ -167,8 +168,8 @@ def torch_cal_rmse_all(pred, label, thres=0.2):
     
     mask = label>thres
 
-    rmse = cal_rmse(pred, label)
-    rmse_rain = cal_rmse(pred[mask], label[mask])
-    rmse_non_rain = cal_rmse(pred[~mask], label[~mask])
+    rmse = torch_cal_rmse(pred, label)
+    rmse_rain = torch_cal_rmse(pred[mask], label[mask])
+    rmse_non_rain = torch_cal_rmse(pred[~mask], label[~mask])
 
     return rmse, rmse_rain, rmse_non_rain

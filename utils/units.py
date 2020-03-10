@@ -1,5 +1,6 @@
 import numpy as np
 from global_config import global_config
+import torch 
 
 height, width = global_config['DATA_HEIGHT'], global_config['DATA_WIDTH']
 lat_min, lat_max, lon_min, lon_max = global_config['LAT_MIN'], global_config['LAT_MAX'], global_config['LON_MIN'], global_config['LON_MAX']

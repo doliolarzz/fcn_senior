@@ -197,3 +197,4 @@ $RECYCLE.BIN/
 imgs_*/
 logs_*/
 case_result/
+experiments/*/*.zip

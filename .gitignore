@@ -196,3 +196,4 @@ $RECYCLE.BIN/
 *.bmp
 imgs_*/
 logs_*/
+case_result/

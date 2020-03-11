@@ -24,7 +24,7 @@ def test(model, data_loader, config, save_dir, crop=None):
     n_test = data_loader.n_test_batch()
     test_idx = np.arange(n_test)
     np.random.shuffle(test_idx)
-    for b in tqdm(test_idx[:10]):
+    for b in tqdm(test_idx[:20]):
         data, label = data_loader.get_test(b)
         outputs = None
         with torch.no_grad():
@@ -36,7 +36,10 @@ def test(model, data_loader, config, save_dir, crop=None):
                     outputs = output.detach().cpu().numpy()
                 else:
                     outputs = np.concatenate([outputs, output.detach().cpu().numpy()], axis=1)
-                data = torch.cat([data[:, 1:], output], dim=1)
+                if config['DIM'] == '3D':
+                    data = torch.cat([data[:, :, 1:], output[:, :, None]], dim=2)
+                else:
+                    data = torch.cat([data[:, 1:], output], dim=1)
         pred = np.array(outputs)[:,]
 #         print('pred label shape', pred.shape, label.shape)
         pred = denorm(pred)

@@ -12,6 +12,7 @@ from utils.generators import DataGenerator
 from global_config import global_config
 from summary.test_case import test
 from summary.case import case
+from tqdm import tqdm
 
 save_dir = './case_result'
 config = {
@@ -36,7 +37,7 @@ weight_path = '/home/warit/fcn_senior/experiments/unet/unet_logs/logs_3_1_030114
 model.load_state_dict(torch.load(weight_path, map_location='cuda'))
 
 files = sorted([file for file in glob.glob(global_config['DATA_PATH'])])
-for i in case:
+for i in tqdm(case):
     file_name = i[0]
     crop = i[1]
     sp = save_dir + '/' + file_name[:-4]

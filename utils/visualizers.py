@@ -81,7 +81,7 @@ colors = (np.array([
 lines = [Line2D([0], [0], color=colors[i], linewidth=7) for i, l in enumerate(labels)]
 
 def make_img(img_gt, img_pred, label):
-    fig, ax = plt.subplots(1, 2, figsize=(5, 5))
+    fig, ax = plt.subplots(1, 2, figsize=(8, 4), facecolor='white')
     fig.suptitle(label, fontsize=14)
     ax[0].imshow(img_gt)
     ax[0].set_title('Ground Truth')
@@ -91,7 +91,7 @@ def make_img(img_gt, img_pred, label):
     ax[1].set_title('Prediction')
     ax[1].set_xticks([])
     ax[1].set_yticks([])
-    plt.legend(lines, labels, loc='center left', bbox_to_anchor=(1, 0.5), prop={'size': 10})
+    plt.legend(lines[::-1], labels[::-1], loc='center left', bbox_to_anchor=(1, 0.5))
     buf = io.BytesIO()
     plt.savefig(buf, format='png')
     buf.seek(0)

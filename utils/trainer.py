@@ -30,7 +30,7 @@ class Trainer(object):
         optimizer,
         data_loader,
         save_dir,
-        max_iterations=1,
+        max_iterations=3,
         interval_validate=50,
         interval_checkpoint=1000
     ):
@@ -107,6 +107,7 @@ class Trainer(object):
             }, self.epoch)
 
         if self.config['TASK'] == 'seg':
+            
             img_pred = cv2.cvtColor(np.array(lbl_pred[0] / 4 * 255, dtype=np.uint8), cv2.COLOR_GRAY2RGB)
             img_true = cv2.cvtColor(np.array(lbl_true[0] / 4 * 255, dtype=np.uint8), cv2.COLOR_GRAY2RGB)
             self.writer.add_image('result/pred',
@@ -118,7 +119,9 @@ class Trainer(object):
 
         elif self.config['TASK'] == 'reg':
 #             print('img', lbl_pred[0].shape, lbl_true[0].shape)
-                
+            if self.config['DIM'] == '3D':
+                lbl_pred = lbl_pred[:, :, -1]
+                lbl_true = lbl_true[:, :, -1]
             self.writer.add_image('result/pred',
                 rainfall_shade(denorm(lbl_pred[0, 0])).swapaxes(0,2), 
                 self.epoch)
@@ -128,8 +131,10 @@ class Trainer(object):
 
         if self.val_loss <= self.best_val_loss:
             torch.save(self.model.state_dict(), os.path.join(self.save_dir, 
-                'model_{}_best.pth'.format(self.epoch)))
+                'model_best.pth'))
             self.best_val_loss = self.val_loss
+            with open(os.path.join(self.save_dir, "best.txt"), "w") as file:
+                file.write(str(self.epoch))
             
         self.train_loss = 0
         self.train_metrics_value[:] = 0

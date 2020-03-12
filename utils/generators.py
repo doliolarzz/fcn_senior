@@ -63,7 +63,7 @@ class DataGenerator():
             self.last_data.append(torch.from_numpy(data[:, self.in_len:]).to(self.config['DEVICE']))
 
         if self.config['DIM'] == '3D':
-            for i in range(len(self.last_data)-1):
+            for i in range(len(self.last_data)):
                 self.last_data[i] = self.last_data[i][:, None, :]
                 
         return tuple(self.last_data)
@@ -112,7 +112,7 @@ class DataGenerator():
             self.last_data.append(sliced_label)
 
         if self.config['DIM'] == '3D':
-            for i in range(len(self.last_data)-1):
+            for i in range(len(self.last_data)):
                 self.last_data[i] = self.last_data[i][:, None, :]
                 
         return tuple(self.last_data)

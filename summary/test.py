@@ -6,7 +6,7 @@ import cv2
 import numpy as np
 import torch
 from utils.units import mm_dbz, dbz_mm, denorm, torch_denorm
-from utils.visualizers import make_gif_color, rainfall_shade, make_gif
+from utils.visualizers import make_gif_color, rainfall_shade, make_gif, make_gif_color_label
 from utils.evaluators import fp_fn_image_csi, cal_rmse_all, fp_fn_image_csi_muti, torch_cal_rmse_all
 from global_config import global_config
 from models.unet.unet_model import UNet
@@ -51,7 +51,7 @@ def test(model, data_loader, config, save_dir, crop=None):
         csi = fp_fn_image_csi(pred_resized, label)
         csi_multi = fp_fn_image_csi_muti(pred_resized, label)
         rmse, rmse_rain, rmse_non_rain = cal_rmse_all(pred_resized, label)
-        result_all.append([rmse, rmse_rain, rmse_non_rain, csi] + list(csi_multi))
+        result_all.append([csi] + list(csi_multi) + [rmse, rmse_rain, rmse_non_rain])
         
         h_small = pred.shape[2]
         w_small = pred.shape[3]
@@ -60,9 +60,6 @@ def test(model, data_loader, config, save_dir, crop=None):
             for j in range(label.shape[1]):
                 label_small[i, j] = cv2.resize(label[i, j], (w_small, h_small), interpolation = cv2.INTER_AREA)
         
-        scale = 1
-        fontScale = min(global_config['DATA_HEIGHT'], global_config['DATA_WIDTH'])/(25/scale)
-
         path = save_dir + '/imgs'
         if not os.path.exists(path):
             os.makedirs(path)

@@ -3,7 +3,7 @@ from tqdm import tqdm
 from global_config import global_config
 from utils.units import dbz_mm, get_crop_boundary_idx
 from utils.evaluators import fp_fn_image_csi, cal_rmse_all, fp_fn_image_csi_muti, torch_cal_rmse_all
-from utils.visualizers import make_gif_color, rainfall_shade, make_gif
+from utils.visualizers import make_gif_color, rainfall_shade, make_gif, make_gif_color_label
 from utils.units import mm_dbz, dbz_mm, denorm, torch_denorm
 import torch
 import numpy as np
@@ -88,7 +88,7 @@ def test(model, data_loader, config, save_dir, files, file_name, crop=None):
     csi = fp_fn_image_csi(pred_resized, sliced_label)
     csi_multi = fp_fn_image_csi_muti(pred_resized, sliced_label)
     rmse, rmse_rain, rmse_non_rain = cal_rmse_all(pred_resized, sliced_label)
-    result_all = [rmse, rmse_rain, rmse_non_rain, csi] + list(csi_multi)
+    result_all = [csi] + list(csi_multi) + [rmse, rmse_rain, rmse_non_rain]
 
     h_small = int(pred_resized.shape[2] * 0.5)
     w_small = int(pred_resized.shape[3] * 0.5)
@@ -116,6 +116,9 @@ def test(model, data_loader, config, save_dir, files, file_name, crop=None):
 #             make_gif(label_small[i] / 80 * 255, path + '/gt_{}_{}.gif'.format(b, i))
         # Save colored gt gif
         make_gif_color(label_small[i], path + '/gt_colored.gif')
+
+        labels = [os.path.basename(files[idx+i]) for i in range(global_config['OUT_TARGET_LEN'])]
+        make_gif_color_label(label_small[i], pred_small[i], labels, fname=path + '/all.gif')
 
     result_all = np.array(result_all)
     result_all = np.around(result_all, decimals=3)

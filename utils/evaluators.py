@@ -147,7 +147,7 @@ def fp_fn_image_hit(gt, pred, threshold, mask=None):
 def cal_rmse(pred, label):
     return np.sqrt(np.mean(np.square(pred - label)))
 
-def cal_rmse_all(pred, label, thres=0.2):
+def cal_rmse_all(pred, label, thres=1):
     pred = pred.reshape(-1)
     label = label.reshape(-1)
 
@@ -162,7 +162,7 @@ def cal_rmse_all(pred, label, thres=0.2):
 def torch_cal_rmse(yhat,y):
     return torch.sqrt(torch.mean((yhat-y)**2))
 
-def torch_cal_rmse_all(pred, label, thres=0.2):
+def torch_cal_rmse_all(pred, label, thres=1):
 
     assert pred.size() == label.size()
     

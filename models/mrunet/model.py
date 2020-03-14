@@ -6,7 +6,7 @@ import cv2
 
 class MRUNet(nn.Module):
     
-    def __init__(self, config, img_size, state_weight=0.7, geo_size=4):
+    def __init__(self, config, state_weight=0.7, geo_size=4):
         
         self.h, self.w = config['IN_HEIGHT'], config['IN_WIDTH']
 

@@ -19,7 +19,7 @@ config = {
     'DEVICE': torch.device('cuda:0'),
     'IN_LEN': 3,
     'OUT_LEN': 1,
-    'BATCH_SIZE': 2,
+    'BATCH_SIZE': 1,
     'SCALE': 0.25,
     'TASK': 'reg',
     'DIM': '2D',

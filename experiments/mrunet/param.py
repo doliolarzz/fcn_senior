@@ -16,7 +16,7 @@ from tqdm import tqdm
 from torchsummary import summary
 
 config = {
-    'DEVICE': torch.device('cuda:0'),
+    # 'DEVICE': torch.device('cuda:0'),
     'IN_LEN': 3,
     'OUT_LEN': 1,
     'BATCH_SIZE': 1,
@@ -26,6 +26,6 @@ config = {
 }
 config['IN_HEIGHT'] = int(config['SCALE'] * global_config['DATA_HEIGHT'])
 config['IN_WIDTH'] = int(config['SCALE'] * global_config['DATA_WIDTH'])
-model = MRUNet(config)
+model = MRUNet(config).cpu()
 
-summary(model, input_size=(config['IN_LEN'], config['IN_HEIGHT'], config['IN_WIDTH']))
+summary(model, input_size=(config['IN_LEN'], config['IN_HEIGHT'], config['IN_WIDTH']), device='cpu')

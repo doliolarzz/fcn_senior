@@ -12,14 +12,14 @@ class MRUNet(nn.Module):
 
         self.config = config
         self.backbone = UNet(n_channels=config['IN_LEN']*2-1)
-        self.geo = torch.nn.Parameter(data=torch.randn(geo_size, h, w), requires_grad=True)
+        self.geo = nn.Parameter(data=torch.randn(geo_size, h, w), requires_grad=True)
         self.state_weight = state_weight
         self.outConv = nn.Conv2d(64, 1, kernel_size=1)
 
     def get_optFlow(self, input):
         # u, v = optflow.opt_horn(mat,mat2)
         opt = None
-        return nn.Variable(data=torch.from_numpy(opt).float(),requires_grad=False)
+        return nn.Variable(data=torch.from_numpy(opt).float(), requires_grad=False)
 
     def get_next_state(self, next_input, prev_state):
 

@@ -14,7 +14,7 @@ class MRUNet(nn.Module):
         self.h, self.w = config['IN_HEIGHT'], config['IN_WIDTH']
         self.config = config
         self.backbone = UNet(n_channels=config['IN_LEN']*3 - 2)#.to(self.config['DEVICE'])
-        self.geo = nn.Parameter(data=torch.randn(geo_size, self.h, self.w), requires_grad=True).cpu()#.to(self.config['DEVICE'])
+        self.geo = nn.Parameter(data=torch.randn(1, geo_size, self.h, self.w), requires_grad=True).cpu()#.to(self.config['DEVICE'])
         self.state_weight = state_weight
         self.outConv = nn.Conv2d(64, 1, kernel_size=1)
 
@@ -41,10 +41,10 @@ class MRUNet(nn.Module):
         cur_state = self.get_optFlow(cur_input)
 
         for i in range(global_config['OUT_TARGET_LEN']):
-            # print(i)
+
             x = torch.cat([cur_input, cur_state], 1)
             x = self.backbone(x)
-            x = torch.cat([x, self.geo], 1)
+            x = torch.cat(torch.distributions.utils.broadcast_all(x, self.geo), 1)
             x = self.outConv(x)
 
             outputs.append(x)

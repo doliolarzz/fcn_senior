@@ -6,7 +6,7 @@ sys.path.insert(0, '../../')
 import torch
 import yaml
 
-from models.mrunet.model import MRUNet
+from models.unet3d.model import ResidualUNet3D, UNet3D
 from utils.trainer import Trainer
 from utils.generators import DataGenerator
 from global_config import global_config
@@ -26,18 +26,19 @@ def main():
     parser.add_argument('--out', type=int, default=1)
     parser.add_argument('--batchsize', type=int, default=4)
     args = vars(parser.parse_args())
-
     if not os.path.exists('./model_logs'):
         os.makedirs('./model_logs')
     save_dir = './model_logs/logs_' + args['name']
     config = {
         'DEVICE': torch.device(args['device']),
-        'DEVICE_ALL': [0, 2, 3],
         'IN_LEN': int(args['in']),
         'OUT_LEN': int(args['out']),
         'BATCH_SIZE': int(args['batchsize']),
-        'SCALE': 0.25,
-        'DIM': 'TIME',
+        'SCALE': 0.2,
+        # 'SIZEW': 320,
+        # 'SIZEH': 416,
+        'TASK': 'reg',
+        'DIM': '3D',
     }
     torch.cuda.manual_seed(1337)
 
@@ -46,9 +47,8 @@ def main():
     data_loader = DataGenerator(data_path=global_config['DATA_PATH'], config=config)
 
     # 2. model
-    config['IN_HEIGHT'] = int(config['SCALE'] * global_config['DATA_HEIGHT'])
-    config['IN_WIDTH'] = int(config['SCALE'] * global_config['DATA_WIDTH'])
-    model = MRUNet(config)
+    model = ResidualUNet3D(in_channels=1, out_channels=1, final_sigmoid=False, num_levels=3, is_segmentation=False)
+    model = torch.nn.DataParallel(model, device_ids=[0, 2, 3])
     model = model.to(config['DEVICE'])
 
     # 3. optimizer
@@ -66,8 +66,8 @@ def main():
     trainer.train()
 
     # 5. test
-    # weight_path = save_dir + '/model_last.pth'
-    # test(model, weight_path, data_loader, config, save_dir, crop=None)
+    weight_path = save_dir + '/model_last.pth'
+    test(model, weight_path, data_loader, config, save_dir, crop=None)
 
 if __name__ == '__main__':
     main()

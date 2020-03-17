@@ -16,10 +16,10 @@ from tqdm import tqdm
 from torchsummary import summary
 
 config = {
-    'DEVICE': torch.device('cuda:1'),
-    'DEVICE_ALL': [1, 3],
+    'DEVICE': torch.device('cuda:0'),
+    'DEVICE_ALL': [0, 2, 3],
     'IN_LEN': 3,
-    'OUT_LEN': 2,
+    'OUT_LEN': 3,
     'BATCH_SIZE': 4,
     'SCALE': 0.25,
     'TASK': 'reg',

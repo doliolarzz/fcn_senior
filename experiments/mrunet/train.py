@@ -6,7 +6,7 @@ sys.path.insert(0, '../../')
 import torch
 import yaml
 
-from models.unet.unet_model import UNet
+from models.mrunet.model import MRUNet
 from utils.trainer import Trainer
 from utils.generators import DataGenerator
 from global_config import global_config
@@ -27,17 +27,17 @@ def main():
     parser.add_argument('--batchsize', type=int, default=4)
     args = vars(parser.parse_args())
 
-    if not os.path.exists('./unet_logs'):
-        os.makedirs('./unet_logs')
-    save_dir = './unet_logs/logs_' + args['name']
+    if not os.path.exists('./model_logs'):
+        os.makedirs('./model_logs')
+    save_dir = './model_logs/logs_' + args['name']
     config = {
         'DEVICE': torch.device(args['device']),
+        'DEVICE_ALL': [0, 2, 3],
         'IN_LEN': int(args['in']),
         'OUT_LEN': int(args['out']),
         'BATCH_SIZE': int(args['batchsize']),
         'SCALE': 0.25,
-        'TASK': 'reg',
-        'DIM': '2D',
+        'DIM': 'TIME',
     }
     torch.cuda.manual_seed(1337)
 
@@ -46,11 +46,9 @@ def main():
     data_loader = DataGenerator(data_path=global_config['DATA_PATH'], config=config)
 
     # 2. model
-    n_classes = 1
-    if 'seg' in config['TASK']:
-        n_classes = 4
-    model = UNet(n_channels=config['IN_LEN'], n_classes=n_classes)
-    model = torch.nn.DataParallel(model, device_ids=[0, 2, 3])
+    config['IN_HEIGHT'] = int(config['SCALE'] * global_config['DATA_HEIGHT'])
+    config['IN_WIDTH'] = int(config['SCALE'] * global_config['DATA_WIDTH'])
+    model = MRUNet(config)
     model = model.to(config['DEVICE'])
 
     # 3. optimizer
@@ -68,8 +66,8 @@ def main():
     trainer.train()
 
     # 5. test
-    weight_path = save_dir + '/model_last.pth'
-    test(model, weight_path, data_loader, config, save_dir, crop=None)
+    # weight_path = save_dir + '/model_last.pth'
+    # test(model, weight_path, data_loader, config, save_dir, crop=None)
 
 if __name__ == '__main__':
     main()

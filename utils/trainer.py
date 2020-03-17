@@ -21,6 +21,8 @@ from tensorboardX import SummaryWriter
 from datetime import datetime
 from global_config import global_config
 
+torch.autograd.set_detect_anomaly(True)
+
 class Trainer(object):
 
     def __init__(
@@ -52,7 +54,7 @@ class Trainer(object):
 
         self.mse_loss = torch.nn.MSELoss().to(config['DEVICE'])
         self.mae_loss = torch.nn.L1Loss().to(config['DEVICE'])
-        self.cat_loss = WeightedCrossEntropyLoss()
+        # self.cat_loss = WeightedCrossEntropyLoss()
         # self.cat_weight = torch.tensor([1, 20, 50, 100]).float().to(config['DEVICE'])
 
         self.train_loss = 0
@@ -78,19 +80,24 @@ class Trainer(object):
             with torch.no_grad():
                 output = self.model(val_data)
 
-            if self.config['TASK'] == 'seg':
-                loss = self.cat_loss(output, val_label)
-                self.val_loss += loss.data.item() / len(val_data)
-                lbl_pred = output.max(1)[1].detach().cpu().numpy()
-                lbl_true = val_label.cpu().numpy()[:, 0]
-                self.val_metrics_value += fp_fn_image_csi_muti_seg(lbl_pred, lbl_true)
-            elif self.config['TASK'] == 'reg':
+            if self.config['DIM'] == 'TIME':
+                loss = None
+                for i, c in enumerate(self.config['DEVICE_ALL']):
+                    l = self.mse_loss.cuda(c)(output[:, i].cuda(c), val_label[:, i].cuda(c))
+                    if loss is None:
+                        loss = l
+                    else:
+                        loss += l
+                    
+            else:
+                
                 loss = self.mse_loss(output, val_label) + self.mae_loss(output, val_label)
-                self.val_loss += loss.data.item() / len(val_data)
-                lbl_pred = output.detach().cpu().numpy()
-                lbl_true = val_label.cpu().numpy()
+            
+            self.val_loss += loss.data.item() / len(val_data)
+            lbl_pred = output.detach().cpu().numpy()
+            lbl_true = val_label.cpu().numpy()
 #                 print('val', lbl_pred.shape, lbl_true.shape)
-                self.val_metrics_value += fp_fn_image_csi_muti(denorm(lbl_pred), denorm(lbl_true))
+            self.val_metrics_value += fp_fn_image_csi_muti(denorm(lbl_pred), denorm(lbl_true))
 
         self.train_loss /= self.interval_validate
         self.train_metrics_value /= self.interval_validate
@@ -106,28 +113,16 @@ class Trainer(object):
                 'valid': self.val_metrics_value[i]
             }, self.epoch)
 
-        if self.config['TASK'] == 'seg':
-            
-            img_pred = cv2.cvtColor(np.array(lbl_pred[0] / 4 * 255, dtype=np.uint8), cv2.COLOR_GRAY2RGB)
-            img_true = cv2.cvtColor(np.array(lbl_true[0] / 4 * 255, dtype=np.uint8), cv2.COLOR_GRAY2RGB)
-            self.writer.add_image('result/pred',
-                img_pred.swapaxes(0,2), 
-                self.epoch)
-            self.writer.add_image('result/true',
-                img_true.swapaxes(0,2),
-                self.epoch)
-
-        elif self.config['TASK'] == 'reg':
 #             print('img', lbl_pred[0].shape, lbl_true[0].shape)
-            if self.config['DIM'] == '3D':
-                lbl_pred = lbl_pred[:, :, -1]
-                lbl_true = lbl_true[:, :, -1]
-            self.writer.add_image('result/pred',
-                rainfall_shade(denorm(lbl_pred[0, 0])).swapaxes(0,2), 
-                self.epoch)
-            self.writer.add_image('result/true',
-                rainfall_shade(denorm(lbl_true[0, 0])).swapaxes(0,2), 
-                self.epoch)
+        if self.config['DIM'] == '3D':
+            lbl_pred = lbl_pred[:, :, -1]
+            lbl_true = lbl_true[:, :, -1]
+        self.writer.add_image('result/pred',
+            rainfall_shade(denorm(lbl_pred[0, 0])).swapaxes(0,2), 
+            self.epoch)
+        self.writer.add_image('result/true',
+            rainfall_shade(denorm(lbl_true[0, 0])).swapaxes(0,2), 
+            self.epoch)
 
         if self.val_loss <= self.best_val_loss:
             torch.save(self.model.state_dict(), os.path.join(self.save_dir, 
@@ -159,24 +154,27 @@ class Trainer(object):
             self.optim.zero_grad()
             output = self.model(train_data)
             
-            if self.config['TASK'] == 'seg':
-                loss = self.cat_loss(output, train_label)
-            elif self.config['TASK'] == 'reg':
+            if self.config['DIM'] == 'TIME':
+                for i, c in enumerate(self.config['DEVICE_ALL']):
+                    print(i)
+                    a=output[i].cuda(c)
+                    b=train_label[:, i].cuda(c)
+                    print(a.device, b.device)
+                    loss = self.mse_loss.cuda(c)(a, b)
+                    loss.backward()
+                    
+            else:
+
                 loss = self.mse_loss(output, train_label) + self.mae_loss(output, train_label)
-            
-            loss.backward()
+                loss.backward()
+
             self.optim.step()
             self.train_loss += loss.data.item() / len(train_data)
 
-            if self.config['TASK'] == 'seg':
-                lbl_pred = output.max(1)[1].detach().cpu().numpy()
-                lbl_true = train_label.cpu().numpy()[:, 0]
-                self.train_metrics_value += fp_fn_image_csi_muti_seg(lbl_pred, lbl_true)
-            elif self.config['TASK'] == 'reg':
-                lbl_pred = output.detach().cpu().numpy()
-                lbl_true = train_label.cpu().numpy()
+            lbl_pred = output.detach().cpu().numpy()
+            lbl_true = train_label.cpu().numpy()
 #                 print('train', lbl_pred.shape, lbl_true.shape)
-                self.train_metrics_value += fp_fn_image_csi_muti(denorm(lbl_pred), denorm(lbl_true))
+            self.train_metrics_value += fp_fn_image_csi_muti(denorm(lbl_pred), denorm(lbl_true))
             self.add_epoch()
 
     def train(self):

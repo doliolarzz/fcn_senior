@@ -56,11 +56,7 @@ class DataGenerator():
         data = self.get_data(idx)
         self.last_data.append(torch.from_numpy(data[:, :self.in_len]).to(self.config['DEVICE']))
         
-        if self.config['TASK'] == 'seg':
-            cat_data = np.searchsorted(mm_dbz(global_config['LEVEL_BUCKET']), data[:, self.in_len:], side=global_config['LEVEL_SIDE'])
-            self.last_data.append(torch.from_numpy(cat_data).to(self.config['DEVICE']))
-        elif self.config['TASK'] == 'reg':
-            self.last_data.append(torch.from_numpy(data[:, self.in_len:]).to(self.config['DEVICE']))
+        self.last_data.append(torch.from_numpy(data[:, self.in_len:]).to(self.config['DEVICE']))
 
         if self.config['DIM'] == '3D':
             for i in range(len(self.last_data)):
@@ -105,11 +101,7 @@ class DataGenerator():
         self.last_data = []
         self.last_data.append(torch.from_numpy(sliced_input).to(self.config['DEVICE']))
         
-        if self.config['TASK'] == 'seg':
-            cat_data = np.searchsorted(global_config['LEVEL_BUCKET'], sliced_label, side=global_config['LEVEL_SIDE'])
-            self.last_data.append(cat_data)
-        elif self.config['TASK'] == 'reg':
-            self.last_data.append(sliced_label)
+        self.last_data.append(sliced_label)
 
         if self.config['DIM'] == '3D':
             for i in range(len(self.last_data)):

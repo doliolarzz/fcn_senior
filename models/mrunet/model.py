@@ -32,8 +32,10 @@ class MRUNet(nn.Module):
     def get_next_state(self, next_input, prev_state, device):
 
         optFlow = self.get_optFlow(next_input, device)
-        return self.state_weight * optFlow + (1 - self.state_weight) * prev_state
-        
+        next_state = self.state_weight * optFlow + (1 - self.state_weight) * prev_state
+        return next_state.cuda(device)
+
+    
     def forward(self, input):
 
         outputs = []
@@ -43,17 +45,25 @@ class MRUNet(nn.Module):
         for i in range(self.config['OUT_LEN']):
             
             dev = self.config['DEVICE_ALL'][i]
+            cur_input = cur_input.cuda(dev)
             cur_state = cur_state.cuda(dev)
-            x = torch.cat([cur_input, cur_state], 1).cuda(dev)
-            self.backbone = self.backbone.cuda(dev)
-            x = self.backbone(x).cuda(dev)
-            x = torch.cat([x, self.geo.expand(x.shape[0], -1, -1, -1)], 1).cuda(dev)
-            self.outConv = self.outConv.cuda(dev)
-            x = self.outConv(x).cuda(dev)
-            outputs.append(x)
-            cur_input = torch.cat([cur_input[:, 1:], x], 1)
-            cur_state = self.get_next_state(cur_input, cur_state, dev).cuda(dev)
+            x = torch.cat([cur_input, cur_state], 1)#.cuda(dev)
 
-        return torch.stack(outputs, 0).cuda(1)
+            self.backbone = self.backbone.cuda(dev)
+            x = self.backbone(x)#.cuda(dev)
+
+            x = torch.cat([x, self.geo.expand(x.shape[0], -1, -1, -1).cuda(dev)], 1)#.cuda(dev)
+
+            self.outConv = self.outConv.cuda(dev)
+            x = self.outConv(x)#.cuda(dev)
+
+            outputs.append(x)
+            cur_input = torch.cat([cur_input[:, 1:].cuda(dev), x], 1)
+            cur_state = self.get_next_state(cur_input, cur_state, dev)
+
+        # for i in range(len(outputs)):
+        #     print(outputs[i].device, outputs[i].size())
+
+        return outputs#torch.cat([o.cuda(dev) for o in outputs], 1)#.cuda(dev)
 
 

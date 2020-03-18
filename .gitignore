@@ -198,3 +198,4 @@ imgs_*/
 logs_*/
 case_result/
 experiments/*/*.zip
+.vscode/

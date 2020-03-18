@@ -21,7 +21,7 @@ from tensorboardX import SummaryWriter
 from datetime import datetime
 from global_config import global_config
 
-torch.autograd.set_detect_anomaly(True)
+# torch.autograd.set_detect_anomaly(True)
 
 class Trainer(object):
 

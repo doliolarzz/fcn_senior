@@ -5,6 +5,7 @@ import torch.nn as nn
 from models.unet3d.buildingblocks import Encoder, Decoder, DoubleConv, ExtResNetBlock
 from models.unet3d.utils import number_of_features_per_level
 
+
 class Abstract3DUNet(nn.Module):
     """
     Base class for standard and residual UNet.

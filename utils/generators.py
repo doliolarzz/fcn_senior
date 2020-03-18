@@ -32,9 +32,13 @@ class DataGenerator():
         self.shuffle()
 
     def get_data(self, indices):
-        scale = self.config['SCALE']
-        h = int(global_config['DATA_HEIGHT'] * scale)
-        w = int(global_config['DATA_WIDTH'] * scale)
+        if self.config['SCALE'] is None:
+            h = self.config['SIZEH']
+            w = self.config['SIZEW']
+        else:
+            scale = self.config['SCALE']
+            h = int(global_config['DATA_HEIGHT'] * scale)
+            w = int(global_config['DATA_WIDTH'] * scale)
         sliced_data = np.zeros((len(indices), self.windows_size, h, w), dtype=np.float32)
         for i, idx in enumerate(indices):
             for j in range(self.windows_size):
@@ -56,11 +60,7 @@ class DataGenerator():
         data = self.get_data(idx)
         self.last_data.append(torch.from_numpy(data[:, :self.in_len]).to(self.config['DEVICE']))
         
-        if self.config['TASK'] == 'seg':
-            cat_data = np.searchsorted(mm_dbz(global_config['LEVEL_BUCKET']), data[:, self.in_len:], side=global_config['LEVEL_SIDE'])
-            self.last_data.append(torch.from_numpy(cat_data).to(self.config['DEVICE']))
-        elif self.config['TASK'] == 'reg':
-            self.last_data.append(torch.from_numpy(data[:, self.in_len:]).to(self.config['DEVICE']))
+        self.last_data.append(torch.from_numpy(data[:, self.in_len:]).to(self.config['DEVICE']))
 
         if self.config['DIM'] == '3D':
             for i in range(len(self.last_data)):
@@ -78,9 +78,13 @@ class DataGenerator():
 
     def get_data_test(self, indices):
 
-        scale = self.config['SCALE']
-        h = int(global_config['DATA_HEIGHT'] * scale)
-        w = int(global_config['DATA_WIDTH'] * scale)
+        if self.config['SCALE'] is None:
+            h = self.config['SIZEH']
+            w = self.config['SIZEW']
+        else:
+            scale = self.config['SCALE']
+            h = int(global_config['DATA_HEIGHT'] * scale)
+            w = int(global_config['DATA_WIDTH'] * scale)
         sliced_input = np.zeros((len(indices), self.config['IN_LEN'], h, w), dtype=np.float32)
         sliced_label = np.zeros((len(indices), global_config['OUT_TARGET_LEN'], global_config['DATA_HEIGHT'], global_config['DATA_WIDTH']), dtype=np.float32)
         for i, idx in enumerate(indices):
@@ -105,11 +109,7 @@ class DataGenerator():
         self.last_data = []
         self.last_data.append(torch.from_numpy(sliced_input).to(self.config['DEVICE']))
         
-        if self.config['TASK'] == 'seg':
-            cat_data = np.searchsorted(global_config['LEVEL_BUCKET'], sliced_label, side=global_config['LEVEL_SIDE'])
-            self.last_data.append(cat_data)
-        elif self.config['TASK'] == 'reg':
-            self.last_data.append(sliced_label)
+        self.last_data.append(sliced_label)
 
         if self.config['DIM'] == '3D':
             for i in range(len(self.last_data)):

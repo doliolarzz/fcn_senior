@@ -212,7 +212,7 @@ class Encoder(nn.Module):
     """
 
     def __init__(self, in_channels, out_channels, conv_kernel_size=3, apply_pooling=True,
-                 pool_kernel_size=(2, 2, 2), pool_type='max', basic_module=DoubleConv, conv_layer_order='gcr',
+                 pool_kernel_size=2, pool_type='max', basic_module=DoubleConv, conv_layer_order='gcr',
                  num_groups=8, padding=1):
         super(Encoder, self).__init__()
         assert pool_type in ['max', 'avg']
@@ -256,7 +256,7 @@ class Decoder(nn.Module):
         padding (int or tuple): add zero-padding added to all three sides of the input
     """
 
-    def __init__(self, in_channels, out_channels, conv_kernel_size=3, scale_factor=(1, 2, 2), basic_module=DoubleConv,
+    def __init__(self, in_channels, out_channels, conv_kernel_size=3, scale_factor=(2, 2, 2), basic_module=DoubleConv,
                  conv_layer_order='gcr', num_groups=8, mode='nearest', padding=1):
         super(Decoder, self).__init__()
         if basic_module == DoubleConv:
@@ -315,7 +315,7 @@ class Upsampling(nn.Module):
     """
 
     def __init__(self, transposed_conv, in_channels=None, out_channels=None, kernel_size=3,
-                 scale_factor=(1, 2, 2), mode='nearest'):
+                 scale_factor=(2, 2, 2), mode='nearest'):
         super(Upsampling, self).__init__()
 
         if transposed_conv:

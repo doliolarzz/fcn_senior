@@ -58,22 +58,29 @@ def test(model, data_loader, config, save_dir, files, file_name, crop=None):
 
     outputs = None
     with torch.no_grad():
-        for t in range(int(global_config['OUT_TARGET_LEN']//config['OUT_LEN'])):
+        for t in range(int(np.ceil(global_config['OUT_TARGET_LEN']/config['OUT_LEN']))):
             #                 print('input data', data.shape)
             output = model(sliced_input)
 #                 print('output', output.shape)
             if outputs is None:
                 outputs = output.detach().cpu().numpy()
             else:
-                outputs = np.concatenate(
-                    [outputs, output.detach().cpu().numpy()], axis=1)
+                if config['DIM'] == '3D':
+                    outputs = np.concatenate(
+                        [outputs, output.detach().cpu().numpy()], axis=2)
+                else:
+                    outputs = np.concatenate(
+                        [outputs, output.detach().cpu().numpy()], axis=1)
 
             if config['DIM'] == '3D':
-                sliced_input = torch.cat([sliced_input[:, :, 1:], output[:, :, None]], dim=2)
+                sliced_input = output
             else:
-                sliced_input = torch.cat([sliced_input[:, 1:], output], dim=1)
+                sliced_input = torch.cat([sliced_input[:, -config['OUT_LEN']:], output], dim=1)
 
     pred = np.array(outputs)[:, ]
+    if config['DIM'] == '3D':
+        pred = pred[0]
+        pred = pred[:, :global_config['OUT_TARGET_LEN']]
 #         print('pred label shape', pred.shape, label.shape)
     pred = denorm(pred)
     pred_resized = np.zeros(

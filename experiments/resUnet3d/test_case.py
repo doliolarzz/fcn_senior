@@ -18,8 +18,8 @@ save_dir = './case_result'
 config = {
     'DEVICE': torch.device('cuda:0'),
     'IN_LEN': 4,
-    'OUT_LEN': 4,
-    'BATCH_SIZE': 2,
+    'OUT_LEN': 1,
+    'BATCH_SIZE': 3,
     'SCALE': 0.2,
     'TASK': 'reg',
     'DIM': '3D',
@@ -30,10 +30,10 @@ n_classes = 1
 if 'seg' in config['TASK']:
     n_classes = 4
 model = UNet3D(in_channels=1, out_channels=n_classes, final_sigmoid=False, num_levels=3, is_segmentation=False)
-model = torch.nn.DataParallel(model, device_ids=[0, 2])
+model = torch.nn.DataParallel(model, device_ids=[0, 2, 3])
 model = model.to(config['DEVICE'])
 
-weight_path = '/home/warit/models/logs_4_4_03131408/model_last.pth'
+weight_path = '/home/warit/fcn_senior/experiments/unet3d/model_logs/logs_4_1_03092314/model_6000.pth'
 model.load_state_dict(torch.load(weight_path, map_location='cuda'))
 
 files = sorted([file for file in glob.glob(global_config['DATA_PATH'])])

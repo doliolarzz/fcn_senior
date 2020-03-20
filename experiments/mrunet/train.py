@@ -13,7 +13,7 @@ from global_config import global_config
 from summary.test import test
 
 here = osp.dirname(osp.abspath(__file__))
-
+torch.cuda.set_enabled_lms(True)
 def main():
 
     parser = argparse.ArgumentParser()
@@ -32,7 +32,6 @@ def main():
     save_dir = './model_logs/logs_' + args['name']
     config = {
         'DEVICE': torch.device(args['device']),
-        'DEVICE_ALL': [0, 2, 3],
         'IN_LEN': int(args['in']),
         'OUT_LEN': int(args['out']),
         'BATCH_SIZE': int(args['batchsize']),
@@ -49,6 +48,7 @@ def main():
     config['IN_HEIGHT'] = int(config['SCALE'] * global_config['DATA_HEIGHT'])
     config['IN_WIDTH'] = int(config['SCALE'] * global_config['DATA_WIDTH'])
     model = MRUNet(config)
+    model = torch.nn.DataParallel(model, device_ids=[0, 2, 3])
     model = model.to(config['DEVICE'])
 
     # 3. optimizer

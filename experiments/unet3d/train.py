@@ -45,11 +45,8 @@ def main():
     data_loader = DataGenerator(data_path=global_config['DATA_PATH'], config=config)
 
     # 2. model
-    n_classes = 1
-    if 'seg' in config['TASK']:
-        n_classes = 4
-    model = UNet3D(in_channels=1, out_channels=n_classes, final_sigmoid=False, num_levels=3, is_segmentation=False)
-    model = torch.nn.DataParallel(model, device_ids=[0, 2])
+    model = UNet3D(in_channels=config['IN_LEN'], out_channels=config['OUT_LEN'], final_sigmoid=False, layer_order='gcrb', is_segmentation=False)
+    model = torch.nn.DataParallel(model, device_ids=[0, 2, 3])
     model = model.to(config['DEVICE'])
 
     # 3. optimizer

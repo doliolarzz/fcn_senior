@@ -106,6 +106,9 @@ class Trainer(object):
         if self.config['DIM'] == '3D':
             lbl_pred = lbl_pred[:, :, -1]
             lbl_true = lbl_true[:, :, -1]
+        elif self.config['DIM'] == '2D':
+            lbl_pred = lbl_pred[:, -1]
+            lbl_true = lbl_true[:, -1]
         self.writer.add_image('result/pred',
             rainfall_shade(denorm(lbl_pred[0, 0])).swapaxes(0,2), 
             self.epoch)

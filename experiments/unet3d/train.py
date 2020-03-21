@@ -45,7 +45,7 @@ def main():
     data_loader = DataGenerator(data_path=global_config['DATA_PATH'], config=config)
 
     # 2. model
-    model = UNet3D(in_channels=config['IN_LEN'], out_channels=config['OUT_LEN'], final_sigmoid=False, layer_order='gcrb', is_segmentation=False)
+    model = UNet3D(in_channels=config['IN_LEN'], out_channels=config['OUT_LEN'], final_sigmoid=False, layer_order='gcr', is_segmentation=False)
     model = torch.nn.DataParallel(model, device_ids=[0, 2, 3])
     model = model.to(config['DEVICE'])
 

@@ -43,9 +43,10 @@ class MRUNet(nn.Module):
         cur_state = self.get_optFlow(cur_input)
         for i in range(self.config['OUT_LEN']):
             
-            cur_input = cur_input[:, :, 1:].cuda()
+            cur_input = cur_input.cuda()
+            cur_input_sliced = cur_input[:, :, 1:]
             cur_state = cur_state.cuda()
-            x = torch.cat([cur_input, cur_state, self.geo.expand(cur_input.shape[0], -1, cur_input.shape[2], -1, -1)], 1)
+            x = torch.cat([cur_input_sliced, cur_state, self.geo.expand(cur_input.shape[0], -1, cur_input.shape[2], -1, -1)], 1)
 
             self.backbone = self.backbone
             x = self.backbone(x)
@@ -54,9 +55,9 @@ class MRUNet(nn.Module):
             x = self.outConv(x)
 
             outputs.append(x)
-            cur_input = torch.cat([cur_input[:, 1:], x], 1)
+            cur_input = torch.cat([cur_input[:, -1:], x], 2)
             cur_state = self.get_next_state(cur_input, cur_state)
 
-        return torch.cat(outputs, 1)
+        return torch.cat(outputs, 2)
 
 

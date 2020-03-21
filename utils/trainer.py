@@ -33,7 +33,7 @@ class Trainer(object):
         data_loader,
         save_dir,
         max_iterations=3,
-        interval_validate=50,
+        interval_validate=100,
         interval_checkpoint=1000
     ):
         self.config              = config

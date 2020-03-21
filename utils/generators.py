@@ -65,6 +65,9 @@ class DataGenerator():
         if self.config['DIM'] == '3D':
             for i in range(len(self.last_data)):
                 self.last_data[i] = self.last_data[i][:, None, :]
+        elif self.config['DIM'] == '2D':
+            for i in range(len(self.last_data)):
+                self.last_data[i] = self.last_data[i][:, :, None]
                 
         return tuple(self.last_data)
 
@@ -114,6 +117,9 @@ class DataGenerator():
         if self.config['DIM'] == '3D':
             for i in range(len(self.last_data)):
                 self.last_data[i] = self.last_data[i][:, None, :]
+        elif self.config['DIM'] == '2D':
+            for i in range(len(self.last_data)):
+                self.last_data[i] = self.last_data[i][:, :, None]
                 
         return tuple(self.last_data)
 

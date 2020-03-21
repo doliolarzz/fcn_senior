@@ -6,14 +6,13 @@ sys.path.insert(0, '../../')
 import torch
 import yaml
 
-from models.unet.unet_model import UNet
+from models.unet.model import UNet2D
 from utils.trainer import Trainer
 from utils.generators import DataGenerator
 from global_config import global_config
-from summary.test import test
 
 here = osp.dirname(osp.abspath(__file__))
-
+torch.cuda.set_enabled_lms(True)
 def main():
 
     parser = argparse.ArgumentParser()
@@ -27,9 +26,9 @@ def main():
     parser.add_argument('--batchsize', type=int, default=4)
     args = vars(parser.parse_args())
 
-    if not os.path.exists('./unet_logs'):
-        os.makedirs('./unet_logs')
-    save_dir = './unet_logs/logs_' + args['name']
+    if not os.path.exists('./model_logs'):
+        os.makedirs('./model_logs')
+    save_dir = './model_logs/logs_' + args['name']
     config = {
         'DEVICE': torch.device(args['device']),
         'IN_LEN': int(args['in']),
@@ -46,10 +45,7 @@ def main():
     data_loader = DataGenerator(data_path=global_config['DATA_PATH'], config=config)
 
     # 2. model
-    n_classes = 1
-    if 'seg' in config['TASK']:
-        n_classes = 4
-    model = UNet(n_channels=config['IN_LEN'], n_classes=n_classes)
+    model = UNet2D(in_channels=config['IN_LEN'], out_channels=1, final_sigmoid=False, layer_order='gcrb', is_segmentation=False)
     model = torch.nn.DataParallel(model, device_ids=[0, 2, 3])
     model = model.to(config['DEVICE'])
 
@@ -68,8 +64,8 @@ def main():
     trainer.train()
 
     # 5. test
-    weight_path = save_dir + '/model_last.pth'
-    test(model, weight_path, data_loader, config, save_dir, crop=None)
+    # weight_path = save_dir + '/model_last.pth'
+    # test(model, weight_path, data_loader, config, save_dir, crop=None)
 
 if __name__ == '__main__':
     main()

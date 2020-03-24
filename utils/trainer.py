@@ -32,9 +32,9 @@ class Trainer(object):
         optimizer,
         data_loader,
         save_dir,
-        max_iterations=3,
+        max_iterations=4,
         interval_validate=100,
-        interval_checkpoint=1000
+        interval_checkpoint=2000
     ):
         self.config              = config
         self.model               = model

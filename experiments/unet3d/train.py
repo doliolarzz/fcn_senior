@@ -6,14 +6,13 @@ sys.path.insert(0, '../../')
 import torch
 import yaml
 
-from models.unet3d.model import UNet3D
+from models.unet.model import UNet3D
 from utils.trainer import Trainer
 from utils.generators import DataGenerator
 from global_config import global_config
-from summary.test import test
 
 here = osp.dirname(osp.abspath(__file__))
-
+torch.cuda.set_enabled_lms(True)
 def main():
 
     parser = argparse.ArgumentParser()
@@ -45,7 +44,7 @@ def main():
     data_loader = DataGenerator(data_path=global_config['DATA_PATH'], config=config)
 
     # 2. model
-    model = UNet3D(in_channels=config['IN_LEN'], out_channels=config['OUT_LEN'], final_sigmoid=False, layer_order='gcr', is_segmentation=False)
+    model = UNet3D(in_channels=1, out_channels=1, final_sigmoid=False, layer_order='gcr', is_segmentation=False, num_levels=3)
     model = torch.nn.DataParallel(model, device_ids=[0, 2, 3])
     model = model.to(config['DEVICE'])
 
@@ -64,8 +63,8 @@ def main():
     trainer.train()
 
     # 5. test
-    weight_path = save_dir + '/model_last.pth'
-    test(model, weight_path, data_loader, config, save_dir, crop=None)
+    # weight_path = save_dir + '/model_last.pth'
+    # test(model, weight_path, data_loader, config, save_dir, crop=None)
 
 if __name__ == '__main__':
     main()

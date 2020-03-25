@@ -6,8 +6,9 @@ sys.path.insert(0, '../../')
 import torch
 import yaml
 
-from models.hrnet.config import config
+from models.hrnet.config import config as cfg, update_config
 from models.hrnet.seg_hrnet import get_seg_model
+from models.unet.model import UNet2D
 from utils.trainer import Trainer
 from utils.generators import DataGenerator
 from global_config import global_config
@@ -37,7 +38,7 @@ def main():
         'BATCH_SIZE': int(args['batchsize']),
         'SCALE': 0.25,
         'TASK': 'reg',
-        'DIM': '2D',
+        'DIM': 'HR',
     }
     torch.cuda.manual_seed(1337)
 
@@ -46,7 +47,8 @@ def main():
     data_loader = DataGenerator(data_path=global_config['DATA_PATH'], config=config)
 
     # 2. model
-    model = get_seg_model(config)
+    update_config(cfg, { 'cfg': './params.yaml' })
+    model = get_seg_model(cfg)
     model = torch.nn.DataParallel(model, device_ids=[0, 2, 3])
     model = model.to(config['DEVICE'])
 

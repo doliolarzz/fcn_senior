@@ -79,7 +79,7 @@ class Trainer(object):
             val_data, val_label = self.data_loader.get_val(b_val)
             with torch.no_grad():
                 output = self.model(val_data)
-
+            
             loss = self.mse_loss(output, val_label) + self.mae_loss(output, val_label)
             
             self.val_loss += loss.data.item() / len(val_data)

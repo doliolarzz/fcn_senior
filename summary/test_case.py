@@ -11,6 +11,9 @@ import cv2
 import os
 import glob
 import sys
+import matplotlib.pyplot as plt
+plt.style.use('ggplot')
+
 sys.path.insert(0, '../')
 
 rs_img = torch.nn.Upsample(size=(
@@ -55,13 +58,15 @@ def test(model, data_loader, config, save_dir, files, file_name, crop=None):
 
     if config['DIM'] == '3D':
         sliced_input = sliced_input[:, None, :]
+    else:
+        sliced_input = sliced_input[:, :, None]
 
     outputs = None
     with torch.no_grad():
         for t in range(int(np.ceil(global_config['OUT_TARGET_LEN']/config['OUT_LEN']))):
-            #                 print('input data', data.shape)
+            # print('input data', sliced_input.shape)
             output = model(sliced_input)
-#                 print('output', output.shape)
+            # print('output', output.shape)
             if outputs is None:
                 outputs = output.detach().cpu().numpy()
             else:
@@ -75,11 +80,14 @@ def test(model, data_loader, config, save_dir, files, file_name, crop=None):
             if config['DIM'] == '3D':
                 sliced_input = output
             else:
-                sliced_input = torch.cat([sliced_input[:, -config['OUT_LEN']:], output], dim=1)
+                sliced_input = torch.cat([sliced_input[:, config['OUT_LEN']:], output], dim=1)
 
-    pred = np.array(outputs)[:, ]
+    pred = np.array(outputs)
     if config['DIM'] == '3D':
-        pred = pred[0]
+        pred = pred[:, 0]
+        pred = pred[:, :global_config['OUT_TARGET_LEN']]
+    else:
+        pred = pred[:, :, 0]
         pred = pred[:, :global_config['OUT_TARGET_LEN']]
 #         print('pred label shape', pred.shape, label.shape)
     pred = denorm(pred)
@@ -92,7 +100,11 @@ def test(model, data_loader, config, save_dir, files, file_name, crop=None):
 
     pred_resized = pred_resized[:, :, h1: h2 + 1, w1: w2 + 1]
     sliced_label = sliced_label[:, :, h1: h2 + 1, w1: w2 + 1]
-    csi = fp_fn_image_csi(pred_resized, sliced_label)
+    # csi = fp_fn_image_csi(pred_resized, sliced_label)
+    csis = []
+    for c in range(pred.shape[1]):
+        csis.append(fp_fn_image_csi(pred_resized[:, c], sliced_label[:, c]))
+    csi = np.mean(csis)
     csi_multi = fp_fn_image_csi_muti(pred_resized, sliced_label)
     rmse, rmse_rain, rmse_non_rain = cal_rmse_all(pred_resized, sliced_label)
     result_all = [csi] + list(csi_multi) + [rmse, rmse_rain, rmse_non_rain]
@@ -126,6 +138,13 @@ def test(model, data_loader, config, save_dir, files, file_name, crop=None):
 
         labels = [os.path.basename(files[idx+i]) for i in range(global_config['OUT_TARGET_LEN'])]
         make_gif_color_label(label_small[i], pred_small[i], labels, fname=path + '/all.gif')
+
+    fig, ax = plt.subplots(figsize=(8, 4), facecolor='white')
+    ax.plot(np.arange(len(csis))+1, csis)
+    ax.set_xticks(np.arange(global_config['OUT_TARGET_LEN'])+1)
+    ax.set_ylabel('Binary - CSI')
+    ax.set_xlabel('Time Steps')
+    plt.savefig(path + '/csis.png')
 
     result_all = np.array(result_all)
     result_all = np.around(result_all, decimals=3)

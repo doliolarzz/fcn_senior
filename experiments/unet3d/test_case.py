@@ -6,7 +6,7 @@ sys.path.insert(0, '../../')
 import torch
 import yaml
 
-from models.unet3d.model import UNet3D
+from models.unet.model import UNet3D
 from utils.trainer import Trainer
 from utils.generators import DataGenerator
 from global_config import global_config

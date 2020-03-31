@@ -149,3 +149,4 @@ def test(model, data_loader, config, save_dir, files, file_name, crop=None):
     result_all = np.array(result_all)
     result_all = np.around(result_all, decimals=3)
     np.savetxt(save_dir + '/result.txt', result_all, delimiter=',', fmt='%.3f')
+    np.savetxt(save_dir + '/csi.txt', np.array(csis), delimiter=',', fmt='%.3f')

@@ -150,11 +150,11 @@ class UNet3D(Abstract3DUNet):
     """
 
     def __init__(self, in_channels, out_channels, final_sigmoid=True, f_maps=64, layer_order='gcr',
-                 num_groups=8, num_levels=4, is_segmentation=True, conv_padding=1, **kwargs):
+                 num_groups=8, num_levels=4, is_segmentation=True, conv_padding=1, pool_kernel_size=2, **kwargs):
         super(UNet3D, self).__init__(in_channels=in_channels, out_channels=out_channels, final_sigmoid=final_sigmoid,
                                      basic_module=DoubleConv, f_maps=f_maps, layer_order=layer_order,
                                      num_groups=num_groups, num_levels=num_levels, is_segmentation=is_segmentation,
-                                     conv_padding=conv_padding, **kwargs)
+                                     conv_padding=conv_padding, pool_kernel_size=pool_kernel_size, **kwargs)
 
 
 class ResidualUNet3D(Abstract3DUNet):

@@ -34,7 +34,7 @@ class Trainer(object):
         save_dir,
         max_iterations=4,
         interval_validate=100,
-        interval_checkpoint=2000
+        interval_checkpoint=1500
     ):
         self.config              = config
         self.model               = model

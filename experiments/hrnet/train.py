@@ -47,7 +47,7 @@ def main():
     data_loader = DataGenerator(data_path=global_config['DATA_PATH'], config=config)
 
     # 2. model
-    update_config(cfg, { 'cfg': './params.yaml' })
+    update_config(cfg, { 'cfg': './params3.yaml' })
     model = get_seg_model(cfg)
     model = torch.nn.DataParallel(model, device_ids=[0, 2, 3])
     model = model.to(config['DEVICE'])

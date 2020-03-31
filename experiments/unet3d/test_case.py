@@ -33,7 +33,7 @@ model = UNet3D(in_channels=1, out_channels=n_classes, final_sigmoid=False, num_l
 model = torch.nn.DataParallel(model, device_ids=[0, 2])
 model = model.to(config['DEVICE'])
 
-weight_path = '/home/warit/models/logs_4_4_03131408/model_last.pth'
+weight_path = '/home/warit/models/unet3d_4_4/model_last.pth'
 model.load_state_dict(torch.load(weight_path, map_location='cuda'))
 
 files = sorted([file for file in glob.glob(global_config['DATA_PATH'])])

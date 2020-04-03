@@ -53,7 +53,7 @@ class Trainer(object):
         self.pbar_i = tqdm(range(1, max_iterations + 1))
 
         self.mse_loss = torch.nn.MSELoss().to(config['DEVICE'])
-        self.mae_loss = torch.nn.L1Loss().to(config['DEVICE'])
+        # self.mae_loss = torch.nn.L1Loss().to(config['DEVICE'])
         # self.cat_loss = WeightedCrossEntropyLoss()
         # self.cat_weight = torch.tensor([1, 20, 50, 100]).float().to(config['DEVICE'])
 
@@ -80,7 +80,7 @@ class Trainer(object):
             with torch.no_grad():
                 output = self.model(val_data)
             
-            loss = self.mse_loss(output, val_label) + self.mae_loss(output, val_label)
+            loss = self.mse_loss(output, val_label) #+ self.mae_loss(output, val_label)
             
             self.val_loss += loss.data.item() / len(val_data)
             lbl_pred = output.detach().cpu().numpy()
@@ -146,7 +146,7 @@ class Trainer(object):
             self.optim.zero_grad()
             output = self.model(train_data)
             
-            loss = self.mse_loss(output, train_label) + self.mae_loss(output, train_label)
+            loss = self.mse_loss(output, train_label) #+ self.mae_loss(output, train_label)
             loss.backward()
 
             self.optim.step()

@@ -46,7 +46,7 @@ def main():
 
     # 2. model
     model = UNet2D(in_channels=config['IN_LEN'], out_channels=1, final_sigmoid=False, layer_order='gcr', is_segmentation=False)
-    model = torch.nn.DataParallel(model, device_ids=[0, 2, 3])
+    model = torch.nn.DataParallel(model, device_ids=[0, 3])
     model = model.to(config['DEVICE'])
 
     # 3. optimizer

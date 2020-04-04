@@ -4,6 +4,7 @@ import numpy as np
 from models.unet.model import UNet2D
 from global_config import global_config
 import cv2
+from utils import optical_flow
 
 class RRNet(nn.Module):
     
@@ -58,7 +59,7 @@ class RRNet(nn.Module):
 
     #input: b,t,1,h,w
     #optFlow: b,1,h,w
-    def forward(self, input, optFlow):
+    def forward(self, input, optFlow=None):
 
         c = torch.zeros((input.shape[0], self.hidden_size, self.h, self.w), dtype=torch.float)
         h = torch.zeros((input.shape[0], self.hidden_size, self.h, self.w), dtype=torch.float)
@@ -89,7 +90,8 @@ class RRNet(nn.Module):
             o = torch.sigmoid(o+self.Wco*c)
             h_next = o*torch.tanh(c)
 
-            optFlow = get_next_optFlow(h, h_next, optFlow)
+            if self.use_optFlow:
+                optFlow = get_next_optFlow(h, h_next, optFlow)
             h = h_next
             outputs.append(h)
 

@@ -22,9 +22,10 @@ def test(model, data_loader, config, save_dir, crop=None):
 
     result_all = []
     n_test = data_loader.n_test_batch()
-    test_idx = np.arange(n_test)
-    np.random.shuffle(test_idx)
-    for b in tqdm(test_idx[:20]):
+    # test_idx = np.arange(n_test)
+    # np.random.shuffle(test_idx)
+    # for b in tqdm(test_idx[:20]):
+    for b in tqdm(range(n_test)):
         data, label = data_loader.get_test(b)
         outputs = None
         with torch.no_grad():
@@ -50,8 +51,13 @@ def test(model, data_loader, config, save_dir, crop=None):
         # don't need to denorm test
         csi = fp_fn_image_csi(pred_resized, label)
         csi_multi = fp_fn_image_csi_muti(pred_resized, label)
-        rmse, rmse_rain, rmse_non_rain = cal_rmse_all(pred_resized, label)
-        result_all.append([csi] + list(csi_multi) + [rmse, rmse_rain, rmse_non_rain])
+        # rmse, rmse_rain, rmse_non_rain = cal_rmse_all(pred_resized, label)
+        sum_rmse = np.zeros(3)
+        for i in range(global_config['OUT_TARGET_LEN']):
+            rmse, rmse_rain, rmse_non_rain = torch_cal_rmse_all(pred_resized[:,i].to(), label[:,i].to())
+            sum_rmse += np.array(rmse, rmse_rain, rmse_non_rain)
+        mean_rmse = sum_rmse / global_config['OUT_TARGET_LEN']
+        result_all.append([csi] + list(csi_multi) + list(mean_rmse))
         
         h_small = pred.shape[2]
         w_small = pred.shape[3]

@@ -58,17 +58,21 @@ class DataGenerator():
 
         self.last_data = []
         data = self.get_data(idx)
-        self.last_data.append(torch.from_numpy(data[:, :self.in_len]).to(self.config['DEVICE']))
-        
-        self.last_data.append(torch.from_numpy(data[:, self.in_len:]).to(self.config['DEVICE']))
-
-        if self.config['DIM'] == '3D':
-            for i in range(len(self.last_data)):
-                self.last_data[i] = self.last_data[i][:, None, :]
-        elif self.config['DIM'] == '2D':
+        if self.config['DIM'] == 'RR':
+            self.last_data.append(torch.from_numpy(data[:, :-1]).to(self.config['DEVICE']))
+            self.last_data.append(torch.from_numpy(data[:, 1:]).to(self.config['DEVICE']))
             for i in range(len(self.last_data)):
                 self.last_data[i] = self.last_data[i][:, :, None]
-                
+        else:
+            self.last_data.append(torch.from_numpy(data[:, :self.in_len]).to(self.config['DEVICE']))
+            self.last_data.append(torch.from_numpy(data[:, self.in_len:]).to(self.config['DEVICE']))
+            if self.config['DIM'] == '3D':
+                for i in range(len(self.last_data)):
+                    self.last_data[i] = self.last_data[i][:, None, :]
+            elif self.config['DIM'] == '2D':
+                for i in range(len(self.last_data)):
+                    self.last_data[i] = self.last_data[i][:, :, None]
+
         return tuple(self.last_data)
 
     def get_train(self, i):

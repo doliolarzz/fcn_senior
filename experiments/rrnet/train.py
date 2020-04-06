@@ -6,11 +6,11 @@ sys.path.insert(0, '../../')
 import torch
 import yaml
 
-from models.hrnet.config import config as cfg, update_config
-from models.hrnet.seg_hrnet import get_seg_model
+from models.rrnet.model import RRNet
 from utils.trainer import Trainer
 from utils.generators import DataGenerator
 from global_config import global_config
+from summary.test import test
 
 here = osp.dirname(osp.abspath(__file__))
 torch.cuda.set_enabled_lms(True)
@@ -36,8 +36,7 @@ def main():
         'OUT_LEN': int(args['out']),
         'BATCH_SIZE': int(args['batchsize']),
         'SCALE': 0.25,
-        'TASK': 'reg',
-        'DIM': 'HR',
+        'DIM': 'RR',
     }
     torch.cuda.manual_seed(1337)
 
@@ -46,9 +45,10 @@ def main():
     data_loader = DataGenerator(data_path=global_config['DATA_PATH'], config=config)
 
     # 2. model
-    update_config(cfg, { 'cfg': './params3.yaml' })
-    model = get_seg_model(cfg)
-    model = torch.nn.DataParallel(model, device_ids=[0, 2, 3])
+    config['IN_HEIGHT'] = int(config['SCALE'] * global_config['DATA_HEIGHT'])
+    config['IN_WIDTH'] = int(config['SCALE'] * global_config['DATA_WIDTH'])
+    model = RRNet(config, 1)
+    model = torch.nn.DataParallel(model, device_ids=[0, 3])
     model = model.to(config['DEVICE'])
 
     # 3. optimizer

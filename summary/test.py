@@ -46,11 +46,11 @@ def test(model, data_loader, config, save_dir, crop=None):
         if config['DIM'] == '3D':
             pred = pred[:, 0]
             pred = pred[:, :global_config['OUT_TARGET_LEN']]
-        else:
+        elif config['DIM'] == '2D':
             pred = pred[:, :, 0]
             pred = pred[:, :global_config['OUT_TARGET_LEN']]
-        label = label[:, :, 0]
-#         print('pred label shape', pred.shape, label.shape)
+            label = label[:, :, 0]
+        # print('pred label shape', pred.shape, label.shape)
         pred = denorm(pred)
         pred_resized = np.zeros((pred.shape[0], pred.shape[1], global_config['DATA_HEIGHT'], global_config['DATA_WIDTH']))
         for i in range(pred.shape[0]):
@@ -89,5 +89,6 @@ def test(model, data_loader, config, save_dir, crop=None):
 
     result_all = np.array(result_all)
     result_all_mean = np.mean(result_all, axis=0)
-    np.savetxt(save_dir + '/result.txt', result_all_mean, delimiter=',')
+    result_all = np.around(result_all, decimals=3)
+    np.savetxt(save_dir + '/result.txt', result_all, delimiter=',', fmt='%.3f')
     # np.savez(save_dir + '/result.npz', r = result_all_mean)

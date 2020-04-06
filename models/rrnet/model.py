@@ -4,7 +4,7 @@ import numpy as np
 from models.unet.model import UNet2D
 from global_config import global_config
 import cv2
-from utils import optical_flow
+# from utils import optical_flow
 
 class RRNet(nn.Module):
     
@@ -23,7 +23,7 @@ class RRNet(nn.Module):
         if use_geo:
             self.geo = nn.Parameter(data=torch.randn(1, geo_size, self.h, self.w), requires_grad=True)
 
-        in_channels = 2
+        in_channels = 1 + hidden_size
         if use_optFlow:
             in_channels+=1
         if use_geo:
@@ -34,11 +34,12 @@ class RRNet(nn.Module):
             out_channels=hidden_size*4, 
             final_sigmoid=False, 
             layer_order='gcr', 
-            is_segmentation=False
+            is_segmentation=False,
+            num_levels=3,
         )
-        self.Wci = nn.Parameter(torch.zeros(1, hidden_size, self.h, self.w))
-        self.Wcf = nn.Parameter(torch.zeros(1, hidden_size, self.h, self.w))
-        self.Wco = nn.Parameter(torch.zeros(1, hidden_size, self.h, self.w))
+        self.Wci = nn.Parameter(torch.zeros(1, hidden_size, 1, self.h, self.w))
+        self.Wcf = nn.Parameter(torch.zeros(1, hidden_size, 1, self.h, self.w))
+        self.Wco = nn.Parameter(torch.zeros(1, hidden_size, 1, self.h, self.w))
 
     def get_optFlow(self, prev_input, next_input):
         prev_input = prev_input.detach().cpu().numpy()
@@ -61,15 +62,14 @@ class RRNet(nn.Module):
     #optFlow: b,1,h,w
     def forward(self, input, optFlow=None):
 
-        c = torch.zeros((input.shape[0], self.hidden_size, self.h, self.w), dtype=torch.float)
-        h = torch.zeros((input.shape[0], self.hidden_size, self.h, self.w), dtype=torch.float)
-        
+        c = torch.zeros((input.shape[0], self.hidden_size, 1, self.h, self.w), dtype=torch.float).cuda()
+        h = torch.zeros((input.shape[0], self.hidden_size, 1, self.h, self.w), dtype=torch.float).cuda()
         outputs = []
-        h = inputs[:, 0]
-        geo_emb = self.geo.expand(input.shape[0], -1, -1, -1)]
-        for t in range(self.config['OUT_LEN']):
+        if self.use_geo:
+            geo_emb = self.geo.expand(input.shape[0], -1, -1, -1)
+        for t in range(self.config['IN_LEN']):
             if self.training:
-                x = inputs[:, t]
+                x = input[:, t, None]
             else:
                 x = h
 
@@ -78,12 +78,11 @@ class RRNet(nn.Module):
                 conv_input.append(optFlow)
             if self.use_geo:
                 conv_input.append(geo_emb)
-
+            
             cat_x = torch.cat(conv_input, dim=1)
             conv_x = self.backbone(cat_x)
 
             i, f, tmp_c, o = torch.chunk(conv_x, 4, dim=1)
-
             i = torch.sigmoid(i+self.Wci*c)
             f = torch.sigmoid(f+self.Wcf*c)
             c = f*c + i*torch.tanh(tmp_c)
@@ -95,5 +94,5 @@ class RRNet(nn.Module):
             h = h_next
             outputs.append(h)
 
-        return torch.stack(outputs, dim=1), (h, c)
+        return torch.cat(outputs, dim=1)
 

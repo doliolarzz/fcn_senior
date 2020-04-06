@@ -61,8 +61,6 @@ class DataGenerator():
         if self.config['DIM'] == 'RR':
             self.last_data.append(torch.from_numpy(data[:, :-1]).to(self.config['DEVICE']))
             self.last_data.append(torch.from_numpy(data[:, 1:]).to(self.config['DEVICE']))
-            for i in range(len(self.last_data)):
-                self.last_data[i] = self.last_data[i][:, :, None]
         else:
             self.last_data.append(torch.from_numpy(data[:, :self.in_len]).to(self.config['DEVICE']))
             self.last_data.append(torch.from_numpy(data[:, self.in_len:]).to(self.config['DEVICE']))

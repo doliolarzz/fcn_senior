@@ -1,10 +1,10 @@
 import torch
 import torch.nn as nn
 import numpy as np
-from models.unet.model import UNet2D
 from global_config import global_config
 import cv2
-# from utils import optical_flow
+from models.hrnet.config import config as cfg, update_config
+from models.hrnet.seg_hrnet import get_seg_model
 
 class RRNet(nn.Module):
     
@@ -29,16 +29,19 @@ class RRNet(nn.Module):
         if use_geo:
             in_channels+=geo_size
 
-        self.backbone = UNet2D(
-            in_channels=in_channels, 
-            out_channels=hidden_size*4, 
-            final_sigmoid=False, 
-            layer_order='gcr', 
-            is_segmentation=False,
-        )
-        self.Wci = nn.Parameter(torch.zeros(1, hidden_size, 1, self.h, self.w))
-        self.Wcf = nn.Parameter(torch.zeros(1, hidden_size, 1, self.h, self.w))
-        self.Wco = nn.Parameter(torch.zeros(1, hidden_size, 1, self.h, self.w))
+        update_config(cfg, { 'cfg': './params.yaml' })
+        self.backbone = get_seg_model(cfg)
+
+        # self.backbone = UNet2D(
+        #     in_channels=in_channels, 
+        #     out_channels=hidden_size*4, 
+        #     final_sigmoid=False, 
+        #     layer_order='gcr', 
+        #     is_segmentation=False,
+        # )
+        self.Wci = nn.Parameter(torch.zeros(1, hidden_size, self.h, self.w))
+        self.Wcf = nn.Parameter(torch.zeros(1, hidden_size, self.h, self.w))
+        self.Wco = nn.Parameter(torch.zeros(1, hidden_size, self.h, self.w))
 
     def get_optFlow(self, prev_input, next_input):
         prev_input = prev_input.detach().cpu().numpy()
@@ -61,13 +64,13 @@ class RRNet(nn.Module):
     #optFlow: b,1,h,w
     def forward(self, input, optFlow=None):
 
-        c = torch.zeros((input.shape[0], self.hidden_size, 1, self.h, self.w), dtype=torch.float).cuda()
-        h = torch.zeros((input.shape[0], self.hidden_size, 1, self.h, self.w), dtype=torch.float).cuda()
+        c = torch.zeros((input.shape[0], self.hidden_size, self.h, self.w), dtype=torch.float).cuda()
+        h = torch.zeros((input.shape[0], self.hidden_size, self.h, self.w), dtype=torch.float).cuda()
         outputs = []
         if self.use_geo:
             geo_emb = self.geo.expand(input.shape[0], -1, -1, -1)
         for t in range(self.config['IN_LEN']):
-            if self.training:
+            if self.training or t == 0:
                 x = input[:, t, None]
             else:
                 x = h

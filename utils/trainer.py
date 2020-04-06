@@ -86,7 +86,8 @@ class Trainer(object):
             lbl_pred = output.detach().cpu().numpy()
             lbl_true = val_label.cpu().numpy()
 #                 print('val', lbl_pred.shape, lbl_true.shape)
-            self.val_metrics_value += fp_fn_image_csi_muti(denorm(lbl_pred), denorm(lbl_true))
+            csis, w_csi = fp_fn_image_csi_muti(denorm(lbl_pred), denorm(lbl_true))
+            self.val_metrics_value += csis
 
         self.train_loss /= self.interval_validate
         self.train_metrics_value /= self.interval_validate
@@ -158,7 +159,8 @@ class Trainer(object):
             lbl_pred = output.detach().cpu().numpy()
             lbl_true = train_label.cpu().numpy()
 #                 print('train', lbl_pred.shape, lbl_true.shape)
-            self.train_metrics_value += fp_fn_image_csi_muti(denorm(lbl_pred), denorm(lbl_true))
+            csis, w_csi = fp_fn_image_csi_muti(denorm(lbl_pred), denorm(lbl_true))
+            self.train_metrics_value += csis
             self.add_epoch()
 
     def train(self):

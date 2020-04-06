@@ -94,11 +94,15 @@ def fp_fn_image_csi_muti(pred, gt):
     # evaluate
     all_csi = []
     for i in range(len(global_config['LEVEL_BUCKET']) + 1):
-        
-        fp = np.sum((gt_cat != i) & (pred_cat == i))
-        fn = np.sum((gt_cat == i) & (pred_cat != i))
-        tp = np.sum((gt_cat == i) & (pred_cat == i))
-        tn = np.sum((gt_cat != i) & (pred_cat != i))
+        gt_e = gt_cat == i
+        gt_ne = gt_cat != i
+        pred_e = pred_cat == i
+        pred_ne = pred_cat != i
+
+        fp = np.sum(gt_ne & pred_e)
+        fn = np.sum(gt_e & pred_ne)
+        tp = np.sum(gt_e & pred_e)
+        tn = np.sum(gt_ne & pred_ne)
 
         all_csi.append(float(tp + 1e-4) / (fp + fn + tp + 1e-4) * 100)
 

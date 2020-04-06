@@ -11,6 +11,8 @@
 import numpy as np
 import torch
 from global_config import global_config
+import numba
+from numba import prange
 
 def hex2Rgb(tn_rgb):
     return list(int(tn_rgb[i:i+2], 16) for i in (0, 2, 4))
@@ -85,15 +87,18 @@ def fp_fn_image_csi(pred, gt, threshold=1):
 
     return csi
 
-
+bucket = global_config['LEVEL_BUCKET']
+side = global_config['LEVEL_SIDE']
+@numba.jit(nopython = True, parallel = True) 
 def fp_fn_image_csi_muti(pred, gt):
     # categorize
-    pred_cat = np.searchsorted(global_config['LEVEL_BUCKET'], pred, side=global_config['LEVEL_SIDE'])
-    gt_cat = np.searchsorted(global_config['LEVEL_BUCKET'], gt, side=global_config['LEVEL_SIDE'])
+    pred_cat = np.searchsorted(bucket, pred, side=side)
+    gt_cat = np.searchsorted(bucket, gt, side=side)
 
     # evaluate
     all_csi = []
-    for i in range(len(global_config['LEVEL_BUCKET']) + 1):
+    w = []
+    for i in prange(len(bucket) + 1):
         gt_e = gt_cat == i
         gt_ne = gt_cat != i
         pred_e = pred_cat == i
@@ -105,8 +110,10 @@ def fp_fn_image_csi_muti(pred, gt):
         tn = np.sum(gt_ne & pred_ne)
 
         all_csi.append(float(tp + 1e-4) / (fp + fn + tp + 1e-4) * 100)
+        w.append(np.sum(gt_e)/gt_cat.size)
 
-    return np.array(all_csi)
+    csis = np.array(all_csi)
+    return csis, np.sum(csis * np.array(w))
 
 def fp_fn_image_csi_muti_seg(pred, gt):
     # evaluate

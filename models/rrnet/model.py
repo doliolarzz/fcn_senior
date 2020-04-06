@@ -35,7 +35,6 @@ class RRNet(nn.Module):
             final_sigmoid=False, 
             layer_order='gcr', 
             is_segmentation=False,
-            num_levels=3,
         )
         self.Wci = nn.Parameter(torch.zeros(1, hidden_size, 1, self.h, self.w))
         self.Wcf = nn.Parameter(torch.zeros(1, hidden_size, 1, self.h, self.w))

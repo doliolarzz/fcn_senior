@@ -58,37 +58,40 @@ def test(model, data_loader, config, save_dir, crop=None):
                 pred_resized[i, j] = cv2.resize(pred[i, j], (global_config['DATA_WIDTH'], global_config['DATA_HEIGHT']), interpolation = cv2.INTER_AREA)
         # don't need to denorm test
         csi = fp_fn_image_csi(pred_resized, label)
-        csi_multi = fp_fn_image_csi_muti(pred_resized, label)
+        csi_multi, macro_csi = fp_fn_image_csi_muti(pred_resized, label)
         # rmse, rmse_rain, rmse_non_rain = cal_rmse_all(pred_resized, label)
         sum_rmse = np.zeros((3, ), dtype=np.float32)
         for i in range(global_config['OUT_TARGET_LEN']):
             rmse, rmse_rain, rmse_non_rain = torch_cal_rmse_all(torch.from_numpy(pred_resized[:,i]).to(config['CAL_DEVICE']), torch.from_numpy(label[:,i]).to(config['CAL_DEVICE']))
             sum_rmse += np.array([rmse.cpu().numpy(), rmse_rain.cpu().numpy(), rmse_non_rain.cpu().numpy()])
         mean_rmse = sum_rmse / global_config['OUT_TARGET_LEN']
-        result_all.append([csi] + list(csi_multi) + list(mean_rmse))
+        result_all.append([csi, macro_csi] + list(csi_multi) + list(mean_rmse))
 
-        # h_small = pred.shape[2]
-        # w_small = pred.shape[3]
-        # label_small = np.zeros((label.shape[0], label.shape[1], h_small, w_small))
-        # for i in range(label.shape[0]):
-        #     for j in range(label.shape[1]):
-        #         label_small[i, j] = cv2.resize(label[i, j], (w_small, h_small), interpolation = cv2.INTER_AREA)
+        h_small = pred.shape[2]
+        w_small = pred.shape[3]
+        label_small = np.zeros((label.shape[0], label.shape[1], h_small, w_small))
+        for i in range(label.shape[0]):
+            for j in range(label.shape[1]):
+                label_small[i, j] = cv2.resize(label[i, j], (w_small, h_small), interpolation = cv2.INTER_AREA)
         
-        # path = save_dir + '/imgs'
-        # if not os.path.exists(path):
-        #     os.makedirs(path)
-        # for i in range(pred_resized.shape[0]):
-            #Save pred gif
-#             make_gif(pred[i] / 80 * 255, path + '/pred_{}_{}.gif'.format(b, i))
-            #Save colored pred gif
-            # make_gif_color(pred[i], path + '/pred_colored_{}_{}.gif'.format(b, i))
-            #Save gt gif
-#             make_gif(label_small[i] / 80 * 255, path + '/gt_{}_{}.gif'.format(b, i))
-            #Save colored gt gif
-            # make_gif_color(label_small[i], path + '/gt_colored_{}_{}.gif'.format(b, i))
+        path = save_dir + '/imgs'
+        if not os.path.exists(path):
+            os.makedirs(path)
+        for i in range(pred_resized.shape[0]):
+            # Save pred gif
+            #             make_gif(pred[i] / 80 * 255, path + '/pred_{}_{}.gif'.format(b, i))
+            # Save colored pred gif
+            # make_gif_color(pred[i], path + '/pred_colored.gif')
+            # Save gt gif
+    #             make_gif(label_small[i] / 80 * 255, path + '/gt_{}_{}.gif'.format(b, i))
+            # Save colored gt gif
+            # make_gif_color(label_small[i], path + '/gt_colored.gif')
+
+            labels = ['' for i in range(global_config['OUT_TARGET_LEN'])]
+            make_gif_color_label(label_small[i], pred[i], labels, fname=path + '/{}.gif'.format(b))
 
     result_all = np.array(result_all)
     result_all_mean = np.mean(result_all, axis=0)
-    result_all = np.around(result_all, decimals=3)
-    np.savetxt(save_dir + '/result.txt', result_all, delimiter=',', fmt='%.3f')
+    result_all_mean = np.around(result_all_mean, decimals=3)
+    np.savetxt(save_dir + '/result.txt', result_all_mean, delimiter=',', fmt='%.3f')
     # np.savez(save_dir + '/result.npz', r = result_all_mean)

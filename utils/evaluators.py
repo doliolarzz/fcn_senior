@@ -89,7 +89,6 @@ def fp_fn_image_csi(pred, gt, threshold=1):
 
 bucket = global_config['LEVEL_BUCKET']
 side = global_config['LEVEL_SIDE']
-@numba.jit(nopython = True, parallel = True) 
 def fp_fn_image_csi_muti(pred, gt):
     # categorize
     pred_cat = np.searchsorted(bucket, pred, side=side)
@@ -98,7 +97,7 @@ def fp_fn_image_csi_muti(pred, gt):
     # evaluate
     all_csi = []
     w = []
-    for i in prange(len(bucket) + 1):
+    for i in range(len(bucket) + 1):
         gt_e = gt_cat == i
         gt_ne = gt_cat != i
         pred_e = pred_cat == i
@@ -184,3 +183,30 @@ def torch_cal_rmse_all(pred, label, thres=1):
     rmse_non_rain = torch_cal_rmse(pred[~mask], label[~mask])
 
     return rmse, rmse_rain, rmse_non_rain
+
+# bucket = global_config['LEVEL_BUCKET']
+# side = global_config['LEVEL_SIDE']
+# def torch_fp_fn_image_csi_muti(pred, gt):
+#     # categorize
+#     pred_cat = np.searchsorted(bucket, pred, side=side)
+#     gt_cat = np.searchsorted(bucket, gt, side=side)
+
+#     # evaluate
+#     all_csi = []
+#     w = []
+#     for i in range(len(bucket) + 1):
+#         gt_e = gt_cat == i
+#         gt_ne = gt_cat != i
+#         pred_e = pred_cat == i
+#         pred_ne = pred_cat != i
+
+#         fp = np.sum(gt_ne & pred_e)
+#         fn = np.sum(gt_e & pred_ne)
+#         tp = np.sum(gt_e & pred_e)
+#         tn = np.sum(gt_ne & pred_ne)
+
+#         all_csi.append(float(tp + 1e-4) / (fp + fn + tp + 1e-4) * 100)
+#         w.append(np.sum(gt_e)/gt_cat.size)
+
+#     csis = np.array(all_csi)
+#     return csis, np.sum(csis * np.array(w))

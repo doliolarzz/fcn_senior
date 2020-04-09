@@ -90,8 +90,6 @@ class RRNet(nn.Module):
             c = f*c + i*torch.tanh(tmp_c)
             o = torch.sigmoid(o+self.Wco*c)
             h_next = o*torch.tanh(c)
-            if self.training:
-                h_next = nn.Dropout(p=0.2)(h_next)
 
             if self.use_optFlow:
                 optFlow = get_next_optFlow(h, h_next, optFlow)

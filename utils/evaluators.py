@@ -87,9 +87,9 @@ def fp_fn_image_csi(pred, gt, threshold=1):
 
     return csi
 
-bucket = global_config['LEVEL_BUCKET']
-side = global_config['LEVEL_SIDE']
 def fp_fn_image_csi_muti(pred, gt):
+    bucket = global_config['LEVEL_BUCKET']
+    side = global_config['LEVEL_SIDE']
     # categorize
     pred_cat = np.searchsorted(bucket, pred, side=side)
     gt_cat = np.searchsorted(bucket, gt, side=side)
@@ -184,29 +184,26 @@ def torch_cal_rmse_all(pred, label, thres=1):
 
     return rmse, rmse_rain, rmse_non_rain
 
-# bucket = global_config['LEVEL_BUCKET']
-# side = global_config['LEVEL_SIDE']
-# def torch_fp_fn_image_csi_muti(pred, gt):
-#     # categorize
-#     pred_cat = np.searchsorted(bucket, pred, side=side)
-#     gt_cat = np.searchsorted(bucket, gt, side=side)
+def torch_csi_muti(pred, gt):
+    bucket = [0] + global_config['LEVEL_BUCKET'].tolist() + [1000]
 
-#     # evaluate
-#     all_csi = []
-#     w = []
-#     for i in range(len(bucket) + 1):
-#         gt_e = gt_cat == i
-#         gt_ne = gt_cat != i
-#         pred_e = pred_cat == i
-#         pred_ne = pred_cat != i
+    # evaluate
+    all_csi = []
+    w = []
+    for i in range(len(bucket) - 1):
 
-#         fp = np.sum(gt_ne & pred_e)
-#         fn = np.sum(gt_e & pred_ne)
-#         tp = np.sum(gt_e & pred_e)
-#         tn = np.sum(gt_ne & pred_ne)
+        gt_e = (bucket[i] <= gt) & (gt < bucket[i+1])
+        gt_ne = ~gt_e
+        pred_e = (bucket[i] <= pred) & (gt < bucket[i+1])
+        pred_ne = ~pred_e
 
-#         all_csi.append(float(tp + 1e-4) / (fp + fn + tp + 1e-4) * 100)
-#         w.append(np.sum(gt_e)/gt_cat.size)
+        fp = torch.sum(gt_ne & pred_e).cpu().numpy()
+        fn = torch.sum(gt_e & pred_ne).cpu().numpy()
+        tp = torch.sum(gt_e & pred_e).cpu().numpy()
+        tn = torch.sum(gt_ne & pred_ne).cpu().numpy()
 
-#     csis = np.array(all_csi)
-#     return csis, np.sum(csis * np.array(w))
+        all_csi.append(float(tp + 1e-4) / (fp + fn + tp + 1e-4) * 100)
+        w.append(torch.sum(gt_e)/gt.numel())
+
+    csis = np.array(all_csi)
+    return csis, np.sum(csis * np.array(w))

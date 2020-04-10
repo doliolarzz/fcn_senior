@@ -257,7 +257,7 @@ blocks_dict = {
 
 class HighResolutionNet(nn.Module):
 
-    def __init__(self, config, in_channel, **kwargs):
+    def __init__(self, config, in_channel, out_channels, **kwargs):
         extra = config.MODEL.EXTRA
         super(HighResolutionNet, self).__init__()
 
@@ -320,7 +320,7 @@ class HighResolutionNet(nn.Module):
             nn.ReLU(inplace=True),
             nn.Conv2d(
                 in_channels=last_inp_channels,
-                out_channels=config.DATASET.NUM_CLASSES,
+                out_channels=out_channels,
                 kernel_size=extra.FINAL_CONV_KERNEL,
                 stride=1,
                 padding=1 if extra.FINAL_CONV_KERNEL == 3 else 0)
@@ -473,8 +473,8 @@ class HighResolutionNet(nn.Module):
             model_dict.update(pretrained_dict)
             self.load_state_dict(model_dict)
 
-def get_seg_model(cfg, in_channel, **kwargs):
-    model = HighResolutionNet(cfg, in_channel, **kwargs)
+def get_seg_model(cfg, in_channel, out_channels, **kwargs):
+    model = HighResolutionNet(cfg, in_channel, out_channels, **kwargs)
     model.init_weights(cfg.MODEL.PRETRAINED)
 
     return model

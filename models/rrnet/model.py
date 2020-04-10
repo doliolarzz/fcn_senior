@@ -23,14 +23,15 @@ class RRNet(nn.Module):
         if use_geo:
             self.geo = nn.Parameter(data=torch.randn(1, geo_size, self.h, self.w), requires_grad=True)
 
-        in_channels = 1 + hidden_size
+        in_channels = hidden_size + 1
+        out_channels = hidden_size * 4
         if use_optFlow:
             in_channels+=1
         if use_geo:
             in_channels+=geo_size
 
         update_config(cfg, { 'cfg': './params.yaml' })
-        self.backbone = get_seg_model(cfg, in_channels)
+        self.backbone = get_seg_model(cfg, in_channels, out_channels)
         self.outConv = nn.Conv2d(hidden_size, 1, 1)
         self.outRelu = nn.ReLU()
         # self.backbone = UNet2D(
@@ -64,7 +65,7 @@ class RRNet(nn.Module):
     #input: b,t,1,h,w
     #optFlow: b,1,h,w
     def forward(self, input, optFlow=None):
-
+        
         c = torch.zeros((input.shape[0], self.hidden_size, self.h, self.w), dtype=torch.float).cuda()
         h = torch.zeros((input.shape[0], self.hidden_size, self.h, self.w), dtype=torch.float).cuda()
         outputs = []
@@ -74,7 +75,7 @@ class RRNet(nn.Module):
             if self.training or t == 0:
                 x = input[:, t, None]
             else:
-                x = h
+                x = h_out
 
             conv_input = [x, h]
             if self.use_optFlow:

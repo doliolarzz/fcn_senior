@@ -5,6 +5,7 @@ import numpy as np
 from global_config import global_config
 import itertools
 from utils.units import mm_dbz, get_crop_boundary_idx
+from multiprocessing import Pool
 np.random.seed(42)
 
 class DataGenerator():
@@ -31,6 +32,12 @@ class DataGenerator():
         self.test_indices = np.setdiff1d(self.test_indices, global_config['MISSINGS'])
         self.shuffle()
 
+    def read_resize(self, p):
+        (i, h, w) = p
+        f = np.fromfile(self.files[i], dtype=np.float32) \
+            .reshape((global_config['DATA_HEIGHT'], global_config['DATA_WIDTH']))
+        return cv2.resize(f, (w, h), interpolation = cv2.INTER_AREA)
+
     def get_data(self, indices):
         if self.config['SCALE'] is None:
             h = self.config['SIZEH']
@@ -40,12 +47,16 @@ class DataGenerator():
             h = int(global_config['DATA_HEIGHT'] * scale)
             w = int(global_config['DATA_WIDTH'] * scale)
         sliced_data = np.zeros((len(indices), self.windows_size, h, w), dtype=np.float32)
+        # for i, idx in enumerate(indices):
+        #     for j in range(self.windows_size):
+        #         f = np.fromfile(self.files[idx + j], dtype=np.float32) \
+        #             .reshape((global_config['DATA_HEIGHT'], global_config['DATA_WIDTH']))
+        #         sliced_data[i, j] = \
+        #             cv2.resize(f, (w, h), interpolation = cv2.INTER_AREA)
         for i, idx in enumerate(indices):
-            for j in range(self.windows_size):
-                f = np.fromfile(self.files[idx + j], dtype=np.float32) \
-                    .reshape((global_config['DATA_HEIGHT'], global_config['DATA_WIDTH']))
-                sliced_data[i, j] = \
-                    cv2.resize(f, (w, h), interpolation = cv2.INTER_AREA)
+            with Pool(4) as p:
+                thread_data = p.map(self.read_resize, [(idx + j, h, w) for j in range(self.windows_size)])
+                sliced_data[i] = np.array(thread_data)
                 
         return (mm_dbz(sliced_data) - global_config['NORM_MIN']) / global_config['NORM_DIV']
 

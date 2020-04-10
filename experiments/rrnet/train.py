@@ -47,8 +47,8 @@ def main():
     # 2. model
     config['IN_HEIGHT'] = int(config['SCALE'] * global_config['DATA_HEIGHT'])
     config['IN_WIDTH'] = int(config['SCALE'] * global_config['DATA_WIDTH'])
-    model = RRNet(config, 1)
-    model = torch.nn.DataParallel(model, device_ids=[0, 3])
+    model = RRNet(config, 16)
+    model = torch.nn.DataParallel(model, device_ids=[1, 3])
     model = model.to(config['DEVICE'])
 
     # 3. optimizer

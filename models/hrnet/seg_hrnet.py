@@ -257,12 +257,12 @@ blocks_dict = {
 
 class HighResolutionNet(nn.Module):
 
-    def __init__(self, config, **kwargs):
+    def __init__(self, config, in_channel, **kwargs):
         extra = config.MODEL.EXTRA
         super(HighResolutionNet, self).__init__()
 
         # stem net
-        self.conv1 = nn.Conv2d(2, 64, kernel_size=3, stride=1, padding=1,
+        self.conv1 = nn.Conv2d(in_channel, 64, kernel_size=3, stride=1, padding=1,
                                bias=False)
         self.bn1 = BatchNorm2d(64, momentum=BN_MOMENTUM)
         self.conv2 = nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1,
@@ -473,8 +473,8 @@ class HighResolutionNet(nn.Module):
             model_dict.update(pretrained_dict)
             self.load_state_dict(model_dict)
 
-def get_seg_model(cfg, **kwargs):
-    model = HighResolutionNet(cfg, **kwargs)
+def get_seg_model(cfg, in_channel, **kwargs):
+    model = HighResolutionNet(cfg, in_channel, **kwargs)
     model.init_weights(cfg.MODEL.PRETRAINED)
 
     return model

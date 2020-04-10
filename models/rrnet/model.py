@@ -30,8 +30,9 @@ class RRNet(nn.Module):
             in_channels+=geo_size
 
         update_config(cfg, { 'cfg': './params.yaml' })
-        self.backbone = get_seg_model(cfg)
-
+        self.backbone = get_seg_model(cfg, in_channels)
+        self.outConv = nn.Conv2d(hidden_size, 1, 1)
+        self.outRelu = nn.ReLU()
         # self.backbone = UNet2D(
         #     in_channels=in_channels, 
         #     out_channels=hidden_size*4, 
@@ -90,11 +91,13 @@ class RRNet(nn.Module):
             c = f*c + i*torch.tanh(tmp_c)
             o = torch.sigmoid(o+self.Wco*c)
             h_next = o*torch.tanh(c)
+            h_out = self.outRelu(self.outConv(h_next))
 
             if self.use_optFlow:
-                optFlow = get_next_optFlow(h, h_next, optFlow)
+                optFlow = get_next_optFlow(h, h_out, optFlow)
+            outputs.append(h_out)
+
             h = h_next
-            outputs.append(h)
 
         return torch.cat(outputs, dim=1)
 

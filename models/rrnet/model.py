@@ -33,7 +33,7 @@ class RRNet(nn.Module):
         update_config(cfg, { 'cfg': './params.yaml' })
         self.backbone = get_seg_model(cfg, in_channels, out_channels)
         self.outConv = nn.Conv2d(hidden_size, 1, 1)
-        self.outRelu = nn.ReLU()
+        self.outRelu = nn.ReLU(inplace=True)
         # self.backbone = UNet2D(
         #     in_channels=in_channels, 
         #     out_channels=hidden_size*4, 

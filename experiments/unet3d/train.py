@@ -33,7 +33,7 @@ def main():
         'IN_LEN': int(args['in']),
         'OUT_LEN': int(args['out']),
         'BATCH_SIZE': int(args['batchsize']),
-        'SCALE': 0.2,
+        'SCALE': 0.25,
         'TASK': 'reg',
         'DIM': '3D',
     }

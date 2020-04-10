@@ -83,10 +83,13 @@ class Trainer(object):
             loss = self.mse_loss(output, val_label) + self.mae_loss(output, val_label)
             
             self.val_loss += loss.data.item() / len(val_data)
-            lbl_pred = output#.detach().cpu().numpy()
-            lbl_true = val_label#.cpu().numpy()
+            # lbl_pred = output
+            # lbl_true = val_label
+            lbl_pred = output.detach().cpu().numpy()
+            lbl_true = val_label.cpu().numpy()
 #                 print('val', lbl_pred.shape, lbl_true.shape)
-            csis, w_csi = torch_csi_muti(torch_denorm(lbl_pred), torch_denorm(lbl_true))
+            # csis, w_csi = torch_csi_muti(torch_denorm(lbl_pred), torch_denorm(lbl_true))
+            csis, w_csi = fp_fn_image_csi_muti(denorm(lbl_pred), denorm(lbl_true))
             self.val_metrics_value += csis
 
         self.train_loss /= self.interval_validate
@@ -104,8 +107,8 @@ class Trainer(object):
             }, self.epoch)
 
 #             print('img', lbl_pred[0].shape, lbl_true[0].shape)
-        lbl_pred = lbl_pred.detach().cpu().numpy()
-        lbl_true = lbl_true.cpu().numpy()
+        # lbl_pred = lbl_pred.detach().cpu().numpy()
+        # lbl_true = lbl_true.cpu().numpy()
         if self.config['DIM'] == '3D':
             lbl_pred = lbl_pred[:, :, -1]
             lbl_true = lbl_true[:, :, -1]
@@ -158,10 +161,13 @@ class Trainer(object):
             self.optim.step()
             self.train_loss += loss.data.item() / len(train_data)
 
-            lbl_pred = output
-            lbl_true = train_label
+            # lbl_pred = output
+            # lbl_true = train_label
+            lbl_pred = output.detach().cpu().numpy()
+            lbl_true = train_label.cpu().numpy()
 #                 print('train', lbl_pred.shape, lbl_true.shape)
-            csis, w_csi = torch_csi_muti(torch_denorm(lbl_pred), torch_denorm(lbl_true))
+            # csis, w_csi = torch_csi_muti(torch_denorm(lbl_pred), torch_denorm(lbl_true))
+            csis, w_csi = fp_fn_image_csi_muti(denorm(lbl_pred), denorm(lbl_true))
             self.train_metrics_value += csis
             self.add_epoch()
 

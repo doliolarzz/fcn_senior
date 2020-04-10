@@ -47,7 +47,7 @@ def main():
     # 2. model
     config['IN_HEIGHT'] = int(config['SCALE'] * global_config['DATA_HEIGHT'])
     config['IN_WIDTH'] = int(config['SCALE'] * global_config['DATA_WIDTH'])
-    model = RRNet(config, 32)
+    model = RRNet(config, 8)
     # model = torch.nn.DataParallel(model, device_ids=[0, 3])
     model = model.to(config['DEVICE'])
 

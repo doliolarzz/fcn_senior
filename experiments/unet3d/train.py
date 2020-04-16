@@ -33,7 +33,7 @@ def main():
         'IN_LEN': int(args['in']),
         'OUT_LEN': int(args['out']),
         'BATCH_SIZE': int(args['batchsize']),
-        'SCALE': 0.25,
+        'SCALE': 0.2,
         'TASK': 'reg',
         'DIM': '3D',
     }
@@ -45,8 +45,11 @@ def main():
 
     # 2. model
     model = UNet3D(in_channels=1, out_channels=1, final_sigmoid=False, layer_order='gcr', is_segmentation=False, num_levels=4, pool_kernel_size=(1, 2, 2))
-    model = torch.nn.DataParallel(model, device_ids=[0, 2, 3])
+    model = torch.nn.DataParallel(model, device_ids=[0, 3])
     model = model.to(config['DEVICE'])
+
+    weight_path = '/home/warit/fcn/experiments/unet3d/model_logs/logs_5_5_04140057/model_7500.pth'
+    model.load_state_dict(torch.load(weight_path, map_location='cuda'))
 
     # 3. optimizer
 

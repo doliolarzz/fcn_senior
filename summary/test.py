@@ -22,15 +22,19 @@ def test(model, data_loader, config, save_dir, crop=None):
 
     result_all = []
     n_test = data_loader.n_test_batch()
-    test_idx = np.arange(n_test)
-    np.random.seed(42)
-    np.random.shuffle(test_idx)
-    for b in tqdm(test_idx[:100]):
+    test_idx = np.arange(0, n_test, global_config['OUT_TARGET_LEN'])
+    # np.random.seed(42)
+    # np.random.shuffle(test_idx)
+    for b in tqdm(test_idx):
     # for b in tqdm(range(n_test)):
         data, label = data_loader.get_test(b)
         outputs = None
+        if config['DIM'] == 'RR':
+            out_time = int(np.ceil(global_config['OUT_TARGET_LEN']/(config['IN_LEN'] - 1)))
+        else:
+            out_time = int(np.ceil(global_config['OUT_TARGET_LEN']/config['OUT_LEN']))
         with torch.no_grad():
-            for t in range(int(np.ceil(global_config['OUT_TARGET_LEN']/config['OUT_LEN']))):
+            for t in range(out_time):
 #                 print('input data', data.shape)
                 output = model(data)
 #                 print('output', output.shape)
@@ -50,6 +54,8 @@ def test(model, data_loader, config, save_dir, crop=None):
             pred = pred[:, :, 0]
             pred = pred[:, :global_config['OUT_TARGET_LEN']]
             label = label[:, :, 0]
+        elif config['DIM'] == 'RR':
+            pred = pred[:, :global_config['OUT_TARGET_LEN']]
         # print('pred label shape', pred.shape, label.shape)
         pred = denorm(pred)
         pred_resized = np.zeros((pred.shape[0], pred.shape[1], global_config['DATA_HEIGHT'], global_config['DATA_WIDTH']))

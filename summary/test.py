@@ -19,10 +19,10 @@ def test(model, data_loader, config, save_dir, crop=None):
     save_dir = save_dir + '/res'
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
-
+    model.eval()
     result_all = []
     n_test = data_loader.n_test_batch()
-    test_idx = np.arange(0, n_test, global_config['OUT_TARGET_LEN'])
+    test_idx = np.arange(0, n_test - 3 * global_config['OUT_TARGET_LEN'], 3*global_config['OUT_TARGET_LEN'])
     # np.random.seed(42)
     # np.random.shuffle(test_idx)
     for b in tqdm(test_idx):
@@ -36,14 +36,19 @@ def test(model, data_loader, config, save_dir, crop=None):
         with torch.no_grad():
             for t in range(out_time):
 #                 print('input data', data.shape)
-                output = model(data)
+                if config['DIM'] == 'RR':
+                    output = model(data[:, -1, None])
+                else:
+                    output = model(data)
 #                 print('output', output.shape)
                 if outputs is None:
                     outputs = output.detach().cpu().numpy()
                 else:
                     outputs = np.concatenate([outputs, output.detach().cpu().numpy()], axis=1)
                 if config['DIM'] == '3D':
-                    data = torch.cat([data[:, :, 1:], output[:, :, None]], dim=2)
+                    data = output #torch.cat([data[:, :, 1:], output[:, :, None]], dim=2)
+                if config['DIM'] == 'RR':
+                    data = output
                 else:
                     data = torch.cat([data[:, 1:], output], dim=1)
         pred = np.array(outputs)[:,]

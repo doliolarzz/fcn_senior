@@ -12,8 +12,6 @@ class UNet3DOptGeo(nn.Module):
         
         super(UNet3DOptGeo, self).__init__()
 
-        assert input.shape[2] - 1 == self.config['OUT_LEN']
-
         self.h, self.w = config['IN_HEIGHT'], config['IN_WIDTH']
         self.config = config
         self.use_optFlow = use_optFlow
@@ -32,11 +30,10 @@ class UNet3DOptGeo(nn.Module):
         self.backbone = UNet3D(
             in_channels=in_channels, 
             out_channels=out_channels,
-            final_sigmoid=False, 
-            layer_order='gcr', 
-            is_segmentation=False, 
-            num_levels=4, 
-            pool_kernel_size=(1, 2, 2)
+            final_sigmoid=False,
+            layer_order='gcr',
+            is_segmentation=False,
+            num_levels=3
         )
 
     def get_optFlow(self, input):
@@ -52,15 +49,15 @@ class UNet3DOptGeo(nn.Module):
         return torch.autograd.Variable(data=torch.from_numpy(opt).float(), requires_grad=False).cuda()
 
     #input: b,1,t,h,w
-    def forward(self, input, optFlow=None):
+    def forward(self, input):
         
         if self.use_optFlow or self.use_geo:
-            cat_x = [input]
+            cat_x = [input[:, :, 1:]]
             if self.use_geo:
                 geo_emb = self.geo.expand(input.shape[0], -1, input.shape[2], -1, -1)
                 cat_x.append(geo_emb)
             if self.use_optFlow:
-                optFlow = get_optFlow(input)
+                optFlow = self.get_optFlow(input)
                 cat_x.append(optFlow)
             input = torch.cat(cat_x, 1)
         

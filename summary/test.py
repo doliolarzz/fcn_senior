@@ -13,7 +13,7 @@ from models.unet.model import UNet2D
 from tqdm import tqdm
 
 rs_img = torch.nn.Upsample(size=(global_config['DATA_HEIGHT'], global_config['DATA_WIDTH']), mode='bilinear')
-
+thres = (mm_dbz(0.5) - global_config['NORM_MIN']) / global_config['NORM_DIV']
 def test(model, data_loader, config, save_dir, crop=None):
 
     save_dir = save_dir + '/res'
@@ -28,6 +28,10 @@ def test(model, data_loader, config, save_dir, crop=None):
     for b in tqdm(test_idx):
     # for b in tqdm(range(n_test)):
         data, label = data_loader.get_test(b)
+        per = torch.sum(data >= thres)
+        if per <= 4e4:
+            print('skip', per)
+            continue
         outputs = None
         if config['DIM'] == 'RR':
             out_time = int(np.ceil(global_config['OUT_TARGET_LEN']/(config['IN_LEN'] - 1)))
@@ -44,17 +48,26 @@ def test(model, data_loader, config, save_dir, crop=None):
                 if outputs is None:
                     outputs = output.detach().cpu().numpy()
                 else:
-                    outputs = np.concatenate([outputs, output.detach().cpu().numpy()], axis=1)
+                    if config['DIM'] == '3D':
+                        outputs = np.concatenate(
+                            [outputs, output.detach().cpu().numpy()], axis=2)
+                    else:
+                        outputs = np.concatenate(
+                            [outputs, output.detach().cpu().numpy()], axis=1)
+
                 if config['DIM'] == '3D':
-                    data = output #torch.cat([data[:, :, 1:], output[:, :, None]], dim=2)
-                if config['DIM'] == 'RR':
+                    if config['OPTFLOW']:
+                        data = torch.cat([data[:, :, -1, None], output], axis=2)
+                    else:
+                        data = output #torch.cat([data[:, :, 1:], output[:, :, None]], dim=2)
+                elif config['DIM'] == 'RR':
                     data = output
                 else:
                     data = torch.cat([data[:, 1:], output], dim=1)
         pred = np.array(outputs)[:,]
         if config['DIM'] == '3D':
-            pred = pred[:, 0]
-            pred = pred[:, :global_config['OUT_TARGET_LEN']]
+            pred = pred[:, 0, :global_config['OUT_TARGET_LEN']]
+            label = label[:, 0]
         elif config['DIM'] == '2D':
             pred = pred[:, :, 0]
             pred = pred[:, :global_config['OUT_TARGET_LEN']]

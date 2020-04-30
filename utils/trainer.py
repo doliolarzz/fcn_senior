@@ -126,8 +126,12 @@ class Trainer(object):
             self.epoch)
 
         if self.val_loss <= self.best_val_loss:
-            torch.save(self.model.state_dict(), os.path.join(self.save_dir, 
-                'model_best.pth'))
+            try:
+                torch.save(self.model.module.state_dict(), os.path.join(self.save_dir, 
+                    'model_best.pth'))
+            except:
+                torch.save(self.model.state_dict(), os.path.join(self.save_dir, 
+                    'model_best.pth'))
             self.best_val_loss = self.val_loss
             with open(os.path.join(self.save_dir, "best.txt"), "w") as file:
                 file.write(str(self.epoch))
@@ -177,5 +181,8 @@ class Trainer(object):
             self.pbar_i.update(1)
         self.pbar_i.close()
         self.writer.close()
-        torch.save(self.model.state_dict(), os.path.join(self.save_dir, 'model_last.pth'))
+        try:
+            torch.save(self.model.module.state_dict(), os.path.join(self.save_dir, 'model_last.pth'))
+        except:
+            torch.save(self.model.state_dict(), os.path.join(self.save_dir, 'model_last.pth'))
         

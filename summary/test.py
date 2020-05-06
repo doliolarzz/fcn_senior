@@ -25,13 +25,14 @@ def test(model, data_loader, config, save_dir, crop=None):
     test_idx = np.arange(0, n_test - 3 * global_config['OUT_TARGET_LEN'], 3*global_config['OUT_TARGET_LEN'])
     # np.random.seed(42)
     # np.random.shuffle(test_idx)
+    all_csis = np.zeros((global_config['OUT_TARGET_LEN'],))
     for b in tqdm(test_idx):
     # for b in tqdm(range(n_test)):
         data, label = data_loader.get_test(b)
         per = torch.sum(data >= thres)
-        if per <= 4e4:
-            print('skip', per)
-            continue
+        # if per <= 4e4:
+        #     print('skip', per)
+        #     continue
         outputs = None
         if config['DIM'] == 'RR':
             out_time = int(np.ceil(global_config['OUT_TARGET_LEN']/(config['IN_LEN'] - 1)))
@@ -81,7 +82,12 @@ def test(model, data_loader, config, save_dir, crop=None):
             for j in range(pred.shape[1]):
                 pred_resized[i, j] = cv2.resize(pred[i, j], (global_config['DATA_WIDTH'], global_config['DATA_HEIGHT']), interpolation = cv2.INTER_AREA)
         # don't need to denorm test
-        csi = fp_fn_image_csi(pred_resized, label)
+        csi_time = []
+        for t in range(global_config['OUT_TARGET_LEN']):
+            csi_time.append(fp_fn_image_csi(pred_resized[:,t], label[:,t]))
+        csi = np.mean(csi_time)
+        all_csis+=csi_time
+        # csi = fp_fn_image_csi(pred_resized, label)
         csi_multi, macro_csi = fp_fn_image_csi_muti(pred_resized, label)
         # rmse, rmse_rain, rmse_non_rain = cal_rmse_all(pred_resized, label)
         sum_rmse = np.zeros((3, ), dtype=np.float32)
@@ -114,6 +120,9 @@ def test(model, data_loader, config, save_dir, crop=None):
             labels = ['' for i in range(global_config['OUT_TARGET_LEN'])]
             make_gif_color_label(label_small[i], pred[i], labels, fname=path + '/{}.gif'.format(b))
 
+    all_csis/=len(test_idx)
+    np.savetxt(save_dir + '/csi_time.txt', all_csis, delimiter=',', fmt='%.3f')
+    
     result_all = np.array(result_all)
     result_all_mean = np.mean(result_all, axis=0)
     result_all_mean = np.around(result_all_mean, decimals=3)

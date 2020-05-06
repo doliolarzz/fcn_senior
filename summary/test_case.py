@@ -58,7 +58,7 @@ def test(model, data_loader, config, save_dir, files, file_name, crop=None):
 
     if config['DIM'] == '3D':
         sliced_input = sliced_input[:, None, :]
-    else:
+    elif config['DIM'] == '2D':
         sliced_input = sliced_input[:, :, None]
 
     outputs = None
@@ -78,7 +78,10 @@ def test(model, data_loader, config, save_dir, files, file_name, crop=None):
                         [outputs, output.detach().cpu().numpy()], axis=1)
 
             if config['DIM'] == '3D':
-                sliced_input = output
+                if config['OPTFLOW']:
+                    sliced_input = torch.cat([sliced_input[:, :, -1, None], output], axis=2)
+                else:
+                    sliced_input = output
             else:
                 sliced_input = torch.cat([sliced_input[:, config['OUT_LEN']:], output], dim=1)
 
@@ -86,10 +89,12 @@ def test(model, data_loader, config, save_dir, files, file_name, crop=None):
     if config['DIM'] == '3D':
         pred = pred[:, 0]
         pred = pred[:, :global_config['OUT_TARGET_LEN']]
-    else:
+    elif config['DIM'] == '3D':
         pred = pred[:, :, 0]
         pred = pred[:, :global_config['OUT_TARGET_LEN']]
-#         print('pred label shape', pred.shape, label.shape)
+    else:
+        pred = pred[:, :global_config['OUT_TARGET_LEN']]
+    # print('pred label shape', pred.shape, sliced_label.shape)
     pred = denorm(pred)
     pred_resized = np.zeros(
         (pred.shape[0], pred.shape[1], global_config['DATA_HEIGHT'], global_config['DATA_WIDTH']))
@@ -105,7 +110,7 @@ def test(model, data_loader, config, save_dir, files, file_name, crop=None):
     for c in range(pred.shape[1]):
         csis.append(fp_fn_image_csi(pred_resized[:, c], sliced_label[:, c]))
     csi = np.mean(csis)
-    csi_multi = fp_fn_image_csi_muti(pred_resized, sliced_label)
+    csi_multi, macro_csi = fp_fn_image_csi_muti(pred_resized, sliced_label)
     rmse, rmse_rain, rmse_non_rain = cal_rmse_all(pred_resized, sliced_label)
     result_all = [csi] + list(csi_multi) + [rmse, rmse_rain, rmse_non_rain]
 
@@ -128,11 +133,11 @@ def test(model, data_loader, config, save_dir, files, file_name, crop=None):
         os.makedirs(path)
     for i in range(pred_resized.shape[0]):
         # Save pred gif
-        #             make_gif(pred[i] / 80 * 255, path + '/pred_{}_{}.gif'.format(b, i))
+        # make_gif(pred[i] / 80 * 255, path + '/pred_{}_{}.gif'.format(b, i))
         # Save colored pred gif
         make_gif_color(pred_small[i], path + '/pred_colored.gif')
         # Save gt gif
-#             make_gif(label_small[i] / 80 * 255, path + '/gt_{}_{}.gif'.format(b, i))
+        # make_gif(label_small[i] / 80 * 255, path + '/gt_{}_{}.gif'.format(b, i))
         # Save colored gt gif
         make_gif_color(label_small[i], path + '/gt_colored.gif')
 

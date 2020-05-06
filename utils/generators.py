@@ -28,7 +28,7 @@ class DataGenerator():
         self.train_indices = np.setdiff1d(self.train_indices, global_config['MISSINGS'])
         self.val_indices = np.arange(self.n_val) + self.n_train
         self.val_indices = np.setdiff1d(self.val_indices, global_config['MISSINGS'])
-        self.test_indices = np.arange(self.n_test) + self.n_train + self.n_val
+        self.test_indices = np.arange(self.n_test) + self.n_train #+ self.n_val
         self.test_indices = np.setdiff1d(self.test_indices, global_config['MISSINGS'])
         self.shuffle()
 
